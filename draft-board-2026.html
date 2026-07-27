@@ -1,0 +1,664 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2026 Draft Board · Half-PPR</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<style>
+  :root{
+    --bg:#0F141C; --panel:#161D28; --panel-2:#1C2632; --line:#27323F;
+    --ink:#EDF1F5; --ink-dim:#8C9AAB; --ink-faint:#5C6B7C; --chalk:#F4F6F8;
+    --qb:#F2B53B; --rb:#46D88A; --wr:#46B6F2; --te:#C58CFF;
+    --shadow:0 18px 40px rgba(0,0,0,.45); --r:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%, #1a2433 0%, rgba(26,36,51,0) 60%),var(--bg);
+    color:var(--ink);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;min-height:100vh;padding:0 0 64px;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+  header{
+    position:sticky;top:0;z-index:30;
+    background:linear-gradient(180deg, rgba(15,20,28,.98), rgba(15,20,28,.92));
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:18px 0 0;
+  }
+  .titlerow{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  h1{margin:0;font-size:30px;line-height:.95;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--chalk)}
+  .sub{margin:6px 0 0;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim)}
+  .sub b{color:var(--rb);font-weight:700}
+  .tabs{display:flex;gap:4px;margin-top:16px;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{appearance:none;border:0;background:transparent;cursor:pointer;color:var(--ink-dim);font:inherit;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:12px 14px 13px;border-bottom:3px solid transparent;white-space:nowrap;transition:color .15s}
+  .tab:hover{color:var(--ink)}
+  .tab.on{color:var(--chalk);border-bottom-color:var(--chalk)}
+  .tab .cnt{color:var(--ink-faint);font-weight:600;margin-left:6px;font-size:11px}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 10px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .lg{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.06em;color:var(--ink-dim);text-transform:uppercase;font-weight:700}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .reset{appearance:none;cursor:pointer;font:inherit;font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--ink-dim);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;transition:.15s}
+  .reset:hover{color:var(--ink);border-color:#3a4756}
+  .searchrow{display:flex;align-items:center;gap:9px;margin:12px 0 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0 12px;transition:border-color .15s}
+  .searchrow.active{border-color:#48586a}
+  .searchrow svg{flex:0 0 auto;color:var(--ink-faint)}
+  #search{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--ink);font:inherit;font-size:15px;padding:11px 0}
+  #search::placeholder{color:var(--ink-faint)}
+  #search::-webkit-search-cancel-button{filter:invert(.6)}
+  .scount{font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--ink-dim);white-space:nowrap}
+  .teamsel{flex:0 0 auto;appearance:none;-webkit-appearance:none;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--ink-dim);font:inherit;font-size:12px;font-weight:700;letter-spacing:.04em;padding:7px 24px 7px 10px;margin:6px 0;cursor:pointer;background-image:url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10\" height=\"6\" viewBox=\"0 0 10 6\"><path d=\"M1 1l4 4 4-4\" fill=\"none\" stroke=\"%238a97a8\" stroke-width=\"1.6\" stroke-linecap=\"round\"/></svg>');background-repeat:no-repeat;background-position:right 8px center}
+  .teamsel:focus{outline:none;border-color:#48586a;color:var(--ink)}
+  .teamsel.on{border-color:#48586a;color:var(--ink)}
+  .teamsel option{background:var(--panel);color:var(--ink)}
+  .card.hidden{display:none}
+  ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+  .card{display:grid;grid-template-columns:34px 52px 1fr auto auto auto;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:11px 12px 11px 4px;position:relative;overflow:hidden;transition:border-color .15s,background .15s,transform .06s}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pc,#3a4756)}
+  .card:hover{border-color:#34414f;background:var(--panel-2)}
+  .card.drafted{opacity:.42;filter:saturate(.4)}
+  .card.drafted .name{text-decoration:line-through}
+  .grip{display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink-faint);cursor:grab;touch-action:none}
+  .grip:active{cursor:grabbing}
+  .grip svg{display:block}
+  .grip:hover{color:var(--ink-dim)}
+  .rank{font-size:24px;font-weight:800;color:var(--chalk);text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1}
+  .meta{min-width:0}
+  .name{font-size:16px;font-weight:700;color:var(--ink);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .team{font-size:11.5px;color:var(--ink-dim);letter-spacing:.04em;margin-top:2px}
+  .team .bye{color:var(--ink-faint)}
+  .pos{font-size:11px;font-weight:800;letter-spacing:.08em;color:#0F141C;background:var(--pc,#3a4756);border-radius:6px;padding:5px 8px;min-width:34px;text-align:center}
+  .vorp{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;line-height:1;gap:3px}
+  .vorp .vval{font-size:14px;font-weight:800;color:var(--chalk);font-variant-numeric:tabular-nums}
+  .vorp .vlbl{font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .draftbtn{appearance:none;cursor:pointer;font:inherit;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink-faint);background:transparent;border:1px solid var(--line);border-radius:7px;padding:7px 9px;transition:.15s;white-space:nowrap}
+  .draftbtn:hover{color:var(--ink);border-color:#3a4756}
+  .card.drafted .draftbtn{color:var(--rb);border-color:#2c4a3a;opacity:1}
+  .ghost{opacity:.25}
+  .chosen{border-color:#48586a}
+  .drag{box-shadow:var(--shadow);transform:scale(1.01);background:var(--panel-2)}
+  .hint{margin:18px 2px 0;font-size:12.5px;color:var(--ink-faint);line-height:1.6}
+  .hint b{color:var(--ink-dim);font-weight:700}
+  @media (max-width:480px){
+    h1{font-size:24px}
+    .card{grid-template-columns:28px 40px 1fr auto auto;gap:9px;padding-left:2px}
+    .rank{font-size:20px}.name{font-size:15px}.draftbtn{display:none}
+  }
+  .card{cursor:pointer}
+  #list,.card,.grip{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}
+  .tierbreak{list-style:none;display:flex;align-items:center;gap:8px;margin:15px 0 9px;color:var(--ink-dim);font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+  .tierbreak .grip{flex:0 0 auto;color:var(--ink-faint);cursor:grab;display:flex;align-items:center}
+  .tierbreak .tlabel{flex:0 0 auto;white-space:nowrap;color:var(--ink-dim)}
+  .tierbreak .tline{flex:1 1 auto;height:2px;border-radius:2px;background:var(--line)}
+  .tierbreak .tierx{flex:0 0 auto;appearance:none;border:0;background:transparent;color:var(--ink-faint);font-size:17px;line-height:1;cursor:pointer;padding:2px 4px;border-radius:6px}
+  .tierbreak .tierx:hover{color:#e2607a;background:var(--panel-2)}
+  .ctx{position:fixed;z-index:60;min-width:182px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:6px;display:none}
+  .ctx.show{display:block}
+  .ctx button{display:block;width:100%;text-align:left;appearance:none;border:0;background:transparent;color:var(--ink);font:inherit;font-size:13px;font-weight:600;padding:9px 10px;border-radius:7px;cursor:pointer}
+  .ctx button:hover{background:var(--panel-2)}
+  .ctx button.danger{color:#e2607a}
+  .ovl{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(6,9,13,.66);backdrop-filter:blur(3px)}
+  .ovl.show{display:flex}
+  .modal{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;animation:pop .14s ease-out}
+  @keyframes pop{from{transform:translateY(8px) scale(.985);opacity:0}to{transform:none;opacity:1}}
+  .mhead{position:relative;padding:18px 18px 16px;border-bottom:1px solid var(--line)}
+  .mhead::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--pc,#3a4756)}
+  .mname{font-size:21px;font-weight:800;color:var(--chalk);line-height:1.12;padding-right:30px}
+  .msub{margin-top:5px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);font-weight:700}
+  .mclose{position:absolute;top:12px;right:12px;width:30px;height:30px;border:0;border-radius:8px;background:var(--panel-2);color:var(--ink-dim);font-size:18px;line-height:1;cursor:pointer}
+  .mclose:hover{color:var(--ink)}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:16px 18px 6px}
+  .tile{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:11px 6px;text-align:center}
+  .tile .v{font-size:20px;font-weight:800;color:var(--chalk);font-variant-numeric:tabular-nums}
+  .tile .k{margin-top:3px;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);font-weight:700}
+  .mproj{padding:6px 18px 18px}
+  .mproj h4{margin:10px 0 2px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);font-weight:700}
+  .srow{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-top:1px solid var(--line)}
+  .srow .k{font-size:13px;color:var(--ink-dim)}
+  .srow .v{font-size:14px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  .cmphead{display:grid;grid-template-columns:1fr 62px 70px;gap:8px;padding:8px 0 6px}
+  .cmphead .c{text-align:right;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);font-weight:700}
+  .crow{display:grid;grid-template-columns:1fr 62px 70px;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+  .crow .k{font-size:13px;color:var(--ink-dim)}
+  .crow .c{text-align:right;font-size:14px;font-weight:700;color:var(--chalk);font-variant-numeric:tabular-nums}
+  .crow .c:last-child{color:var(--ink-dim);font-weight:600}
+  .note{margin-top:12px;font-size:12px;color:var(--ink-faint);font-style:italic}
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="titlerow">
+      <div>
+        <h1>Draft Board</h1>
+        <p class="sub">2026 Season · <b>Half-PPR</b></p>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+    <div class="searchrow">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="5"/><line x1="11" y1="11" x2="14.5" y2="14.5" stroke-linecap="round"/></svg>
+      <input id="search" type="search" placeholder="Search player, team, or position" autocomplete="off" spellcheck="false">
+      <span class="scount" id="scount"></span>
+      <select id="team" class="teamsel" title="Filter by team"><option value="">All teams</option></select>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="bar">
+    <div class="legend">
+      <span class="lg"><span class="dot" style="background:var(--qb)"></span>QB</span>
+      <span class="lg"><span class="dot" style="background:var(--rb)"></span>RB</span>
+      <span class="lg"><span class="dot" style="background:var(--wr)"></span>WR</span>
+      <span class="lg"><span class="dot" style="background:var(--te)"></span>TE</span>
+    </div>
+    <button class="reset" id="reset">Reset this board</button>
+  </div>
+  <ul id="list"></ul>
+  <p class="hint"><b>Drag the grip</b> to reorder. <b>Tap a player</b> to see his 2026 projections next to his 2025 actual stats, plus VORP. <b>Search</b> to find a player fast (press / to jump to it, Esc to clear). Tap <b>Draft</b> to cross a player off. On the position tabs, <b>right-click</b> (or long-press) a player to add a tier break; drag a break by its grip to move it, or hit its × to remove it. All tabs share one ranking, so moving a player in any tab updates his spot everywhere, and changes save automatically. Starting order: position tabs use the consensus positional ranks; Overall and Flex use auction value, with positional rank breaking ties.</p>
+</main>
+
+<div class="ovl" id="ovl"><div class="modal" id="modal"></div></div>
+<div class="ctx" id="ctx"></div>
+
+<script>
+const POS_COLOR = {QB:"var(--qb)",RB:"var(--rb)",WR:"var(--wr)",TE:"var(--te)"};
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+
+/* Source: "Jake's Ranks" + "OVR & VORP Ranks" tabs (2026 proj, VORP). 2025 actuals
+   from Pro-Football-Reference 2025 season table, matched by player name. */
+const PLAYERS = [
+{name:"Jaxon Smith-Njigba",team:"SEA",pos:"WR",bye:11,posrk:2,ovr:1,fps:300.9,auc:55.6,vorp:211.8,g25:17,stats:[["Targets","166","163"],["Rec","120","119"],["Rec Yds","1,781","1,793"],["Rec TD","9.9","10"]]},
+{name:"Ja'Marr Chase",team:"CIN",pos:"WR",bye:6,posrk:3,ovr:2,fps:299.8,auc:55.3,vorp:210.7,g25:16,stats:[["Targets","190","185"],["Rec","131","125"],["Rec Yds","1,627","1,412"],["Rec TD","11.7","8"]]},
+{name:"Puka Nacua",team:"LAR",pos:"WR",bye:11,posrk:1,ovr:3,fps:288.9,auc:52.4,vorp:199.8,g25:16,stats:[["Targets","173","166"],["Rec","123","129"],["Rec Yds","1,601","1,715"],["Rec TD","9.1","10"]]},
+{name:"Amon-Ra St. Brown",team:"DET",pos:"WR",bye:6,posrk:4,ovr:4,fps:263.2,auc:45.7,vorp:174.1,g25:17,stats:[["Targets","173","172"],["Rec","121","117"],["Rec Yds","1,424","1,401"],["Rec TD","9.9","11"]]},
+{name:"Bijan Robinson",team:"ATL",pos:"RB",bye:11,posrk:1,ovr:5,fps:322.9,auc:44.8,vorp:170.7,g25:17,stats:[["Rush Att","265","287"],["Rush Yds","1,287","1,478"],["Rush TD","10.1","7"],["Targets","102","103"],["Rec","76","79"],["Rec Yds","738","820"],["Rec TD","3.6","4"]]},
+{name:"Jahmyr Gibbs",team:"DET",pos:"RB",bye:6,posrk:2,ovr:6,fps:320.0,auc:44.2,vorp:168.4,g25:17,stats:[["Rush Att","251","243"],["Rush Yds","1,246","1,223"],["Rush TD","13.4","13"],["Targets","94","94"],["Rec","73","77"],["Rec Yds","575","616"],["Rec TD","3.5","5"]]},
+{name:"Christian McCaffrey",team:"SF",pos:"RB",bye:8,posrk:3,ovr:7,fps:305.3,auc:41.1,vorp:156.6,g25:17,stats:[["Rush Att","255","311"],["Rush Yds","1,025","1,202"],["Rush TD","9.0","10"],["Targets","101","129"],["Rec","83","102"],["Rec Yds","752","924"],["Rec TD","5.4","7"]]},
+{name:"Drake London",team:"ATL",pos:"WR",bye:11,posrk:6,ovr:8,fps:234.2,auc:38.1,vorp:145.1,g25:12,stats:[["Targets","161","112"],["Rec","102","68"],["Rec Yds","1,356","919"],["Rec TD","7.9","7"]]},
+{name:"George Pickens",team:"DAL",pos:"WR",bye:14,posrk:9,ovr:9,fps:233.1,auc:37.8,vorp:144.0,g25:17,stats:[["Targets","139","137"],["Rec","92","93"],["Rec Yds","1,343","1,429"],["Rec TD","8.8","9"]]},
+{name:"Jonathan Taylor",team:"IND",pos:"RB",bye:13,posrk:4,ovr:10,fps:287.8,auc:37.4,vorp:142.6,g25:17,stats:[["Rush Att","303","323"],["Rush Yds","1,453","1,585"],["Rush TD","13.3","18"],["Targets","57","55"],["Rec","44","46"],["Rec Yds","331","378"],["Rec TD","1.4","2"]]},
+{name:"CeeDee Lamb",team:"DAL",pos:"WR",bye:14,posrk:7,ovr:11,fps:222.7,auc:35.0,vorp:133.5,g25:14,stats:[["Targets","154","117"],["Rec","98","75"],["Rec Yds","1,312","1,077"],["Rec TD","7.1","3"]]},
+{name:"Justin Jefferson",team:"MIN",pos:"WR",bye:6,posrk:5,ovr:12,fps:221.4,auc:34.7,vorp:132.3,g25:17,stats:[["Targets","153","141"],["Rec","101","84"],["Rec Yds","1,264","1,048"],["Rec TD","7.4","2"]]},
+{name:"A.J. Brown",team:"NE",pos:"WR",bye:11,posrk:8,ovr:13,fps:216.4,auc:33.4,vorp:127.3,g25:15,stats:[["Targets","134","121"],["Rec","85","78"],["Rec Yds","1,215","1,003"],["Rec TD","8.7","7"]]},
+{name:"Nico Collins",team:"HOU",pos:"WR",bye:8,posrk:10,ovr:14,fps:212.5,auc:32.4,vorp:123.4,g25:15,stats:[["Targets","144","120"],["Rec","86","71"],["Rec Yds","1,273","1,117"],["Rec TD","7.0","6"]]},
+{name:"Tee Higgins",team:"CIN",pos:"WR",bye:6,posrk:15,ovr:15,fps:211.0,auc:32.0,vorp:121.9,g25:15,stats:[["Targets","129","98"],["Rec","81","59"],["Rec Yds","1,085","846"],["Rec TD","10.3","11"]]},
+{name:"De'Von Achane",team:"MIA",pos:"RB",bye:6,posrk:6,ovr:16,fps:261.6,auc:31.9,vorp:121.6,g25:16,stats:[["Rush Att","251","238"],["Rush Yds","1,269","1,350"],["Rush TD","6.0","8"],["Targets","82","85"],["Rec","64","67"],["Rec Yds","468","488"],["Rec TD","3.3","4"]]},
+{name:"Tetairoa McMillan",team:"CAR",pos:"WR",bye:5,posrk:13,ovr:17,fps:207.9,auc:31.2,vorp:118.7,g25:17,stats:[["Targets","149","122"],["Rec","85","70"],["Rec Yds","1,213","1,014"],["Rec TD","7.4","7"]]},
+{name:"Zay Flowers",team:"BAL",pos:"WR",bye:13,posrk:14,ovr:18,fps:204.8,auc:30.4,vorp:115.7,g25:17,stats:[["Targets","123","118"],["Rec","82","86"],["Rec Yds","1,157","1,211"],["Rec TD","6.8","5"]]},
+{name:"James Cook",team:"BUF",pos:"RB",bye:7,posrk:5,ovr:19,fps:250.4,auc:29.6,vorp:112.7,g25:17,stats:[["Rush Att","275","309"],["Rush Yds","1,357","1,621"],["Rush TD","10.0","12"],["Targets","44","40"],["Rec","33","33"],["Rec Yds","269","291"],["Rec TD","1.9","2"]]},
+{name:"Josh Allen",team:"BUF",pos:"QB",bye:7,posrk:1,ovr:20,fps:371.0,auc:29.4,vorp:111.9,g25:17,stats:[["Comp/Att","346/516","319/460"],["Pass Yds","4,002","3,668"],["Pass TD","27.4","25"],["INT","11.1","10"],["Rush Yds","538","579"],["Rush TD","11.7","14"]]},
+{name:"Terry McLaurin",team:"WSH",pos:"WR",bye:7,posrk:17,ovr:21,fps:200.4,auc:29.2,vorp:111.3,g25:10,stats:[["Targets","125","60"],["Rec","83","38"],["Rec Yds","1,124","582"],["Rec TD","7.8","3"]]},
+{name:"DeVonta Smith",team:"PHI",pos:"WR",bye:10,posrk:16,ovr:22,fps:198.1,auc:28.6,vorp:109.0,g25:17,stats:[["Targets","126","113"],["Rec","86","77"],["Rec Yds","1,107","1,008"],["Rec TD","7.4","4"]]},
+{name:"Rashee Rice",team:"KC",pos:"WR",bye:5,posrk:11,ovr:23,fps:197.1,auc:28.3,vorp:108.0,g25:8,stats:[["Targets","129","78"],["Rec","88","53"],["Rec Yds","976","571"],["Rec TD","8.4","5"]]},
+{name:"Jaylen Waddle",team:"DEN",pos:"WR",bye:10,posrk:28,ovr:24,fps:196.1,auc:28.1,vorp:107.0,g25:16,stats:[["Targets","130","100"],["Rec","87","64"],["Rec Yds","1,107","910"],["Rec TD","6.8","6"]]},
+{name:"Ladd McConkey",team:"LAC",pos:"WR",bye:7,posrk:18,ovr:25,fps:195.0,auc:27.8,vorp:105.9,g25:16,stats:[["Targets","127","106"],["Rec","84","66"],["Rec Yds","1,122","789"],["Rec TD","6.8","6"]]},
+{name:"Luther Burden",team:"CHI",pos:"WR",bye:10,posrk:22,ovr:26,fps:194.5,auc:27.7,vorp:105.4,g25:15,stats:[["Targets","132","60"],["Rec","82","47"],["Rec Yds","1,074","652"],["Rec TD","6.6","2"]]},
+{name:"Derrick Henry",team:"BAL",pos:"RB",bye:13,posrk:12,ovr:27,fps:240.8,auc:27.6,vorp:105.0,g25:17,stats:[["Rush Att","282","307"],["Rush Yds","1,413","1,595"],["Rush TD","11.1","16"],["Targets","26","21"],["Rec","18","15"],["Rec Yds","177","150"],["Rec TD","1.0","0"]]},
+{name:"Chase Brown",team:"CIN",pos:"RB",bye:6,posrk:9,ovr:28,fps:240.2,auc:27.4,vorp:104.5,g25:17,stats:[["Rush Att","216","232"],["Rush Yds","948","1,019"],["Rush TD","6.3","6"],["Targets","86","88"],["Rec","72","69"],["Rec Yds","492","437"],["Rec TD","3.8","5"]]},
+{name:"Chris Olave",team:"NO",pos:"WR",bye:8,posrk:12,ovr:29,fps:193.1,auc:27.3,vorp:104.0,g25:16,stats:[["Targets","138","156"],["Rec","86","100"],["Rec Yds","1,074","1,163"],["Rec TD","7.1","9"]]},
+{name:"Emeka Egbuka",team:"TB",pos:"WR",bye:10,posrk:21,ovr:30,fps:190.1,auc:26.5,vorp:101.0,g25:17,stats:[["Targets","131","127"],["Rec","73","63"],["Rec Yds","1,076","938"],["Rec TD","7.6","6"]]},
+{name:"Davante Adams",team:"LAR",pos:"WR",bye:11,posrk:24,ovr:31,fps:189.8,auc:26.4,vorp:100.7,g25:14,stats:[["Targets","127","114"],["Rec","69","60"],["Rec Yds","908","789"],["Rec TD","10.8","14"]]},
+{name:"Garrett Wilson",team:"NYJ",pos:"WR",bye:13,posrk:20,ovr:32,fps:189.1,auc:26.2,vorp:100.0,g25:7,stats:[["Targets","147","59"],["Rec","95","36"],["Rec Yds","1,089","395"],["Rec TD","5.4","4"]]},
+{name:"DJ Moore",team:"BUF",pos:"WR",bye:7,posrk:19,ovr:33,fps:188.3,auc:26.0,vorp:99.2,g25:17,stats:[["Targets","120","85"],["Rec","78","50"],["Rec Yds","1,007","682"],["Rec TD","7.5","6"]]},
+{name:"Ashton Jeanty",team:"LV",pos:"RB",bye:13,posrk:7,ovr:34,fps:233.1,auc:25.9,vorp:98.8,g25:17,stats:[["Rush Att","276","266"],["Rush Yds","1,145","975"],["Rush TD","7.8","5"],["Targets","71","73"],["Rec","50","55"],["Rec Yds","352","346"],["Rec TD","1.9","5"]]},
+{name:"Omarion Hampton",team:"LAC",pos:"RB",bye:7,posrk:10,ovr:35,fps:233.1,auc:25.9,vorp:98.8,g25:9,stats:[["Rush Att","246","124"],["Rush Yds","1,059","545"],["Rush TD","9.3","4"],["Targets","60","35"],["Rec","51","32"],["Rec Yds","355","192"],["Rec TD","1.7","1"]]},
+{name:"Mike Evans",team:"SF",pos:"WR",bye:8,posrk:23,ovr:36,fps:187.1,auc:25.7,vorp:98.0,g25:8,stats:[["Targets","125","62"],["Rec","72","30"],["Rec Yds","1,026","368"],["Rec TD","8.1","3"]]},
+{name:"Carnell Tate",team:"TEN",pos:"WR",bye:9,posrk:30,ovr:37,fps:186.7,auc:25.6,vorp:97.6,g25:null,stats:[["Targets","131",""],["Rec","81",""],["Rec Yds","1,075",""],["Rec TD","6.5",""]]},
+{name:"Kenneth Walker",team:"KC",pos:"RB",bye:5,posrk:8,ovr:38,fps:229.6,auc:25.2,vorp:96.1,g25:17,stats:[["Rush Att","264","221"],["Rush Yds","1,131","1,027"],["Rush TD","9.2","5"],["Targets","50","36"],["Rec","38","31"],["Rec Yds","306","282"],["Rec TD","1.9","0"]]},
+{name:"Jameson Williams",team:"DET",pos:"WR",bye:6,posrk:36,ovr:39,fps:184.0,auc:24.9,vorp:94.9,g25:17,stats:[["Targets","105","102"],["Rec","66","65"],["Rec Yds","1,080","1,117"],["Rec TD","6.1","7"]]},
+{name:"Breece Hall",team:"NYJ",pos:"RB",bye:13,posrk:14,ovr:40,fps:227.4,auc:24.7,vorp:94.3,g25:16,stats:[["Rush Att","240","243"],["Rush Yds","1,070","1,065"],["Rush TD","6.4","4"],["Targets","63","48"],["Rec","50","36"],["Rec Yds","439","350"],["Rec TD","2.2","1"]]},
+{name:"Kyren Williams",team:"LAR",pos:"RB",bye:11,posrk:15,ovr:41,fps:222.3,auc:23.7,vorp:90.2,g25:17,stats:[["Rush Att","244","259"],["Rush Yds","1,119","1,252"],["Rush TD","10.7","10"],["Targets","40","50"],["Rec","28","36"],["Rec Yds","210","281"],["Rec TD","1.8","3"]]},
+{name:"Saquon Barkley",team:"PHI",pos:"RB",bye:10,posrk:11,ovr:42,fps:222.0,auc:23.6,vorp:90.0,g25:16,stats:[["Rush Att","294","280"],["Rush Yds","1,253","1,140"],["Rush TD","8.4","7"],["Targets","44","50"],["Rec","30","37"],["Rec Yds","221","273"],["Rec TD","1.6","2"]]},
+{name:"Cam Skattebo",team:"NYG",pos:"RB",bye:8,posrk:21,ovr:43,fps:219.7,auc:23.1,vorp:88.1,g25:8,stats:[["Rush Att","245","101"],["Rush Yds","1,047","410"],["Rush TD","8.3","5"],["Targets","55","32"],["Rec","40","24"],["Rec Yds","308","207"],["Rec TD","2.3","2"]]},
+{name:"Josh Jacobs",team:"GB",pos:"RB",bye:11,posrk:16,ovr:44,fps:218.8,auc:22.9,vorp:87.4,g25:15,stats:[["Rush Att","244","234"],["Rush Yds","993","929"],["Rush TD","11.5","13"],["Targets","46","44"],["Rec","35","36"],["Rec Yds","263","282"],["Rec TD","1.2","1"]]},
+{name:"Marvin Harrison",team:"ARI",pos:"WR",bye:14,posrk:29,ovr:45,fps:176.5,auc:22.9,vorp:87.4,g25:12,stats:[["Targets","134","73"],["Rec","73","41"],["Rec Yds","1,007","608"],["Rec TD","6.5","4"]]},
+{name:"Makai Lemon",team:"PHI",pos:"WR",bye:10,posrk:31,ovr:46,fps:175.2,auc:22.6,vorp:86.1,g25:null,stats:[["Targets","113",""],["Rec","77",""],["Rec Yds","950",""],["Rec TD","6.3",""]]},
+{name:"Javonte Williams",team:"DAL",pos:"RB",bye:14,posrk:17,ovr:47,fps:216.6,auc:22.5,vorp:85.6,g25:16,stats:[["Rush Att","243","252"],["Rush Yds","1,116","1,201"],["Rush TD","9.3","11"],["Targets","53","51"],["Rec","38","35"],["Rec Yds","191","137"],["Rec TD","1.9","2"]]},
+{name:"Rome Odunze",team:"CHI",pos:"WR",bye:10,posrk:33,ovr:48,fps:174.0,auc:22.3,vorp:84.9,g25:12,stats:[["Targets","129","90"],["Rec","66","44"],["Rec Yds","982","661"],["Rec TD","7.1","6"]]},
+{name:"Travis Etienne",team:"NO",pos:"RB",bye:8,posrk:18,ovr:49,fps:215.4,auc:22.2,vorp:84.7,g25:17,stats:[["Rush Att","259","260"],["Rush Yds","1,100","1,107"],["Rush TD","7.1","7"],["Targets","51","52"],["Rec","40","36"],["Rec Yds","317","292"],["Rec TD","1.8","6"]]},
+{name:"Jeremiyah Love",team:"ARI",pos:"RB",bye:14,posrk:13,ovr:50,fps:214.7,auc:22.1,vorp:84.1,g25:null,stats:[["Rush Att","225",""],["Rush Yds","1,007",""],["Rush TD","6.1",""],["Targets","68",""],["Rec","53",""],["Rec Yds","395",""],["Rec TD","1.9",""]]},
+{name:"Alec Pierce",team:"IND",pos:"WR",bye:13,posrk:27,ovr:51,fps:172.6,auc:21.9,vorp:83.5,g25:15,stats:[["Targets","117","84"],["Rec","63","47"],["Rec Yds","1,045","1,003"],["Rec TD","6.1","6"]]},
+{name:"Parker Washington",team:"JAX",pos:"WR",bye:7,posrk:34,ovr:52,fps:172.1,auc:21.8,vorp:83.0,g25:16,stats:[["Targets","117","95"],["Rec","73","58"],["Rec Yds","955","847"],["Rec TD","6.1","5"]]},
+{name:"Courtland Sutton",team:"DEN",pos:"WR",bye:10,posrk:35,ovr:53,fps:170.4,auc:21.3,vorp:81.3,g25:17,stats:[["Targets","123","124"],["Rec","70","74"],["Rec Yds","931","1,017"],["Rec TD","7.1","7"]]},
+{name:"Christian Watson",team:"GB",pos:"WR",bye:11,posrk:26,ovr:54,fps:168.2,auc:20.7,vorp:79.0,g25:10,stats:[["Targets","101","55"],["Rec","59","35"],["Rec Yds","953","611"],["Rec TD","7.0","6"]]},
+{name:"Jordan Addison",team:"MIN",pos:"WR",bye:6,posrk:39,ovr:55,fps:168.1,auc:20.7,vorp:79.0,g25:14,stats:[["Targets","113","79"],["Rec","72","42"],["Rec Yds","936","610"],["Rec TD","5.7","3"]]},
+{name:"Drake Maye",team:"NE",pos:"QB",bye:11,posrk:2,ovr:56,fps:336.0,auc:19.9,vorp:75.8,g25:17,stats:[["Comp/Att","383/545","354/492"],["Pass Yds","4,413","4,394"],["Pass TD","29.9","31"],["INT","11.9","8"],["Rush Yds","417","450"],["Rush TD","3.6","4"]]},
+{name:"Jordyn Tyson",team:"NO",pos:"WR",bye:8,posrk:32,ovr:57,fps:163.0,auc:19.4,vorp:73.9,g25:null,stats:[["Targets","114",""],["Rec","70",""],["Rec Yds","914",""],["Rec TD","6.1",""]]},
+{name:"DK Metcalf",team:"PIT",pos:"WR",bye:9,posrk:37,ovr:58,fps:162.9,auc:19.4,vorp:73.8,g25:15,stats:[["Targets","121","99"],["Rec","66","59"],["Rec Yds","935","850"],["Rec TD","6.0","6"]]},
+{name:"Michael Pittman",team:"PIT",pos:"WR",bye:9,posrk:40,ovr:59,fps:161.4,auc:19.0,vorp:72.2,g25:17,stats:[["Targets","133","111"],["Rec","85","80"],["Rec Yds","861","784"],["Rec TD","5.4","7"]]},
+{name:"Malik Nabers",team:"NYG",pos:"WR",bye:8,posrk:25,ovr:60,fps:160.8,auc:18.8,vorp:71.7,g25:4,stats:[["Targets","116","35"],["Rec","69","18"],["Rec Yds","915","271"],["Rec TD","5.8","2"]]},
+{name:"Lamar Jackson",team:"BAL",pos:"QB",bye:13,posrk:3,ovr:61,fps:332.2,auc:17.5,vorp:66.7,g25:13,stats:[["Comp/Att","295/456","192/302"],["Pass Yds","3,654","2,549"],["Pass TD","27.5","21"],["INT","8.7","7"],["Rush Yds","723","349"],["Rush TD","3.5","2"]]},
+{name:"David Montgomery",team:"HOU",pos:"RB",bye:8,posrk:19,ovr:62,fps:192.4,auc:17.4,vorp:66.3,g25:17,stats:[["Rush Att","234","158"],["Rush Yds","1,013","716"],["Rush TD","8.4","8"],["Targets","38","29"],["Rec","30","24"],["Rec Yds","208","192"],["Rec TD","0.8","0"]]},
+{name:"Ricky Pearsall",team:"SF",pos:"WR",bye:8,posrk:38,ovr:63,fps:154.3,auc:17.1,vorp:65.2,g25:9,stats:[["Targets","100","53"],["Rec","64","36"],["Rec Yds","949","528"],["Rec TD","4.3","0"]]},
+{name:"TreVeyon Henderson",team:"NE",pos:"RB",bye:11,posrk:22,ovr:64,fps:190.7,auc:17.0,vorp:64.9,g25:17,stats:[["Rush Att","176","180"],["Rush Yds","824","911"],["Rush TD","7.0","9"],["Targets","57","42"],["Rec","45","35"],["Rec Yds","338","221"],["Rec TD","1.6","1"]]},
+{name:"Jakobi Meyers",team:"JAX",pos:"WR",bye:7,posrk:41,ovr:65,fps:153.6,auc:16.9,vorp:64.5,g25:16,stats:[["Targets","115","110"],["Rec","73","75"],["Rec Yds","825","835"],["Rec TD","5.5","3"]]},
+{name:"Quinshon Judkins",team:"CLE",pos:"RB",bye:11,posrk:20,ovr:66,fps:189.0,auc:16.7,vorp:63.6,g25:14,stats:[["Rush Att","277","230"],["Rush Yds","1,136","827"],["Rush TD","7.9","7"],["Targets","29","36"],["Rec","20","26"],["Rec Yds","140","171"],["Rec TD","0.7","0"]]},
+{name:"Kenneth Gainwell",team:"TB",pos:"RB",bye:10,posrk:27,ovr:67,fps:188.9,auc:16.7,vorp:63.5,g25:17,stats:[["Rush Att","175","114"],["Rush Yds","755","537"],["Rush TD","5.8","5"],["Targets","63","85"],["Rec","54","73"],["Rec Yds","390","486"],["Rec TD","2.2","3"]]},
+{name:"Rhamondre Stevenson",team:"NE",pos:"RB",bye:11,posrk:29,ovr:68,fps:189.1,auc:16.7,vorp:63.6,g25:14,stats:[["Rush Att","160","130"],["Rush Yds","717","603"],["Rush TD","7.2","7"],["Targets","53","37"],["Rec","44","32"],["Rec Yds","389","345"],["Rec TD","2.2","2"]]},
+{name:"Wan'Dale Robinson",team:"TEN",pos:"WR",bye:9,posrk:44,ovr:69,fps:152.1,auc:16.5,vorp:63.0,g25:16,stats:[["Targets","115","140"],["Rec","76","92"],["Rec Yds","827","1,014"],["Rec TD","4.7","4"]]},
+{name:"Jayden Reed",team:"GB",pos:"WR",bye:11,posrk:50,ovr:70,fps:149.9,auc:16.0,vorp:60.8,g25:7,stats:[["Targets","89","22"],["Rec","61","19"],["Rec Yds","755","207"],["Rec TD","5.0","1"]]},
+{name:"Jadarian Price",team:"SEA",pos:"RB",bye:11,posrk:23,ovr:71,fps:183.8,auc:15.6,vorp:59.4,g25:null,stats:[["Rush Att","240",""],["Rush Yds","1,011",""],["Rush TD","8.4",""],["Targets","29",""],["Rec","21",""],["Rec Yds","167",""],["Rec TD","0.9",""]]},
+{name:"Josh Downs",team:"IND",pos:"WR",bye:13,posrk:45,ovr:72,fps:148.8,auc:15.6,vorp:59.6,g25:16,stats:[["Targets","111","88"],["Rec","79","58"],["Rec Yds","781","566"],["Rec TD","5.0","4"]]},
+{name:"Quentin Johnston",team:"LAC",pos:"WR",bye:7,posrk:46,ovr:73,fps:148.7,auc:15.6,vorp:59.6,g25:14,stats:[["Targets","97","84"],["Rec","55","51"],["Rec Yds","785","735"],["Rec TD","7.2","8"]]},
+{name:"Tony Pollard",team:"TEN",pos:"RB",bye:9,posrk:31,ovr:74,fps:181.1,auc:15.0,vorp:57.3,g25:17,stats:[["Rush Att","231","242"],["Rush Yds","1,008","1,082"],["Rush TD","6.0","5"],["Targets","43","41"],["Rec","32","33"],["Rec Yds","218","206"],["Rec TD","1.0","0"]]},
+{name:"Colston Loveland",team:"CHI",pos:"TE",bye:10,posrk:3,ovr:75,fps:191.7,auc:14.7,vorp:56.2,g25:16,stats:[["Targets","122","82"],["Rec","83","58"],["Rec Yds","1,004","713"],["Rec TD","8.3","6"]]},
+{name:"D'Andre Swift",team:"CHI",pos:"RB",bye:10,posrk:24,ovr:76,fps:179.4,auc:14.7,vorp:55.9,g25:16,stats:[["Rush Att","192","223"],["Rush Yds","860","1,087"],["Rush TD","7.1","9"],["Targets","46","48"],["Rec","33","34"],["Rec Yds","278","299"],["Rec TD","1.0","1"]]},
+{name:"Chris Godwin",team:"TB",pos:"WR",bye:10,posrk:43,ovr:77,fps:144.7,auc:14.6,vorp:55.6,g25:9,stats:[["Targets","106","51"],["Rec","70","33"],["Rec Yds","778","360"],["Rec TD","5.4","2"]]},
+{name:"Jayden Higgins",team:"HOU",pos:"WR",bye:8,posrk:49,ovr:78,fps:143.9,auc:14.4,vorp:54.8,g25:17,stats:[["Targets","105","68"],["Rec","64","41"],["Rec Yds","796","525"],["Rec TD","5.4","6"]]},
+{name:"Brock Bowers",team:"LV",pos:"TE",bye:13,posrk:1,ovr:79,fps:189.2,auc:14.1,vorp:53.7,g25:12,stats:[["Targets","137","86"],["Rec","95","64"],["Rec Yds","1,017","680"],["Rec TD","6.7","7"]]},
+{name:"Xavier Worthy",team:"KC",pos:"WR",bye:5,posrk:53,ovr:80,fps:142.0,auc:13.9,vorp:52.9,g25:14,stats:[["Targets","98","73"],["Rec","57","42"],["Rec Yds","737","532"],["Rec TD","5.3","1"]]},
+{name:"Joe Burrow",team:"CIN",pos:"QB",bye:6,posrk:5,ovr:81,fps:323.5,auc:13.6,vorp:51.7,g25:8,stats:[["Comp/Att","421/615","173/259"],["Pass Yds","4,532","1,809"],["Pass TD","36.2","17"],["INT","11.1","5"],["Rush Yds","130","41"],["Rush TD","1.1","0"]]},
+{name:"Chuba Hubbard",team:"CAR",pos:"RB",bye:5,posrk:30,ovr:82,fps:173.7,auc:13.5,vorp:51.3,g25:15,stats:[["Rush Att","200","134"],["Rush Yds","829","511"],["Rush TD","5.1","1"],["Targets","56","39"],["Rec","42","30"],["Rec Yds","269","223"],["Rec TD","2.1","3"]]},
+{name:"Brian Thomas",team:"JAX",pos:"WR",bye:7,posrk:47,ovr:83,fps:138.5,auc:12.9,vorp:49.3,g25:14,stats:[["Targets","99","91"],["Rec","53","48"],["Rec Yds","803","707"],["Rec TD","5.2","2"]]},
+{name:"Bhayshul Tuten",team:"JAX",pos:"RB",bye:7,posrk:25,ovr:84,fps:170.3,auc:12.8,vorp:48.6,g25:15,stats:[["Rush Att","182","83"],["Rush Yds","752","307"],["Rush TD","6.2","5"],["Targets","50","14"],["Rec","36","10"],["Rec Yds","278","79"],["Rec TD","2.1","2"]]},
+{name:"Michael Wilson",team:"ARI",pos:"WR",bye:14,posrk:42,ovr:85,fps:137.0,auc:12.6,vorp:47.9,g25:17,stats:[["Targets","107","126"],["Rec","63","78"],["Rec Yds","769","1,006"],["Rec TD","4.7","7"]]},
+{name:"Rico Dowdle",team:"PIT",pos:"RB",bye:9,posrk:33,ovr:86,fps:168.6,auc:12.4,vorp:47.2,g25:17,stats:[["Rush Att","213","236"],["Rush Yds","926","1,076"],["Rush TD","6.4","6"],["Targets","33","50"],["Rec","26","39"],["Rec Yds","197","297"],["Rec TD","0.8","1"]]},
+{name:"RJ Harvey",team:"DEN",pos:"RB",bye:10,posrk:26,ovr:87,fps:166.1,auc:11.9,vorp:45.2,g25:17,stats:[["Rush Att","142","146"],["Rush Yds","577","540"],["Rush TD","5.1","7"],["Targets","60","58"],["Rec","48","47"],["Rec Yds","339","356"],["Rec TD","3.3","5"]]},
+{name:"Jaylen Warren",team:"PIT",pos:"RB",bye:9,posrk:32,ovr:88,fps:165.5,auc:11.7,vorp:44.7,g25:16,stats:[["Rush Att","182","211"],["Rush Yds","803","958"],["Rush TD","4.7","6"],["Targets","50","45"],["Rec","40","40"],["Rec Yds","295","333"],["Rec TD","1.2","2"]]},
+{name:"Trey McBride",team:"ARI",pos:"TE",bye:14,posrk:2,ovr:89,fps:179.4,auc:11.5,vorp:43.8,g25:17,stats:[["Targets","137","169"],["Rec","96","126"],["Rec Yds","949","1,239"],["Rec TD","6.1","11"]]},
+{name:"Romeo Doubs",team:"NE",pos:"WR",bye:11,posrk:48,ovr:90,fps:133.0,auc:11.5,vorp:43.9,g25:16,stats:[["Targets","85","85"],["Rec","53","55"],["Rec Yds","700","724"],["Rec TD","6.1","6"]]},
+{name:"Bucky Irving",team:"TB",pos:"RB",bye:10,posrk:28,ovr:91,fps:163.3,auc:11.3,vorp:43.0,g25:10,stats:[["Rush Att","169","173"],["Rush Yds","676","588"],["Rush TD","3.9","1"],["Targets","48","35"],["Rec","42","30"],["Rec Yds","354","277"],["Rec TD","2.7","3"]]},
+{name:"Omar Cooper",team:"NYJ",pos:"WR",bye:13,posrk:51,ovr:92,fps:131.1,auc:11.0,vorp:42.0,g25:null,stats:[["Targets","105",""],["Rec","62",""],["Rec Yds","725",""],["Rec TD","4.4",""]]},
+{name:"Jalen Hurts",team:"PHI",pos:"QB",bye:10,posrk:6,ovr:93,fps:321.7,auc:10.6,vorp:40.4,g25:16,stats:[["Comp/Att","315/480","294/454"],["Pass Yds","3,538","3,224"],["Pass TD","24.9","25"],["INT","8.1","6"],["Rush Yds","444","421"],["Rush TD","8.7","8"]]},
+{name:"Matthew Golden",team:"GB",pos:"WR",bye:11,posrk:54,ovr:94,fps:128.4,auc:10.3,vorp:39.3,g25:14,stats:[["Targets","90","44"],["Rec","57","29"],["Rec Yds","715","361"],["Rec TD","4.2","0"]]},
+{name:"Jalen Coker",team:"CAR",pos:"WR",bye:5,posrk:56,ovr:95,fps:127.8,auc:10.1,vorp:38.7,g25:11,stats:[["Targets","97","43"],["Rec","62","33"],["Rec Yds","712","394"],["Rec TD","4.3","3"]]},
+{name:"Khalil Shakir",team:"BUF",pos:"WR",bye:7,posrk:52,ovr:96,fps:126.0,auc:9.7,vorp:36.9,g25:16,stats:[["Targets","91","95"],["Rec","65","72"],["Rec Yds","710","719"],["Rec TD","3.8","4"]]},
+{name:"Tyler Warren",team:"IND",pos:"TE",bye:13,posrk:5,ovr:97,fps:168.3,auc:8.6,vorp:32.8,g25:17,stats:[["Targets","119","112"],["Rec","87","76"],["Rec Yds","903","817"],["Rec TD","5.7","4"]]},
+{name:"Kyle Monangai",team:"CHI",pos:"RB",bye:10,posrk:34,ovr:98,fps:147.6,auc:8.0,vorp:30.5,g25:17,stats:[["Rush Att","176","169"],["Rush Yds","759","783"],["Rush TD","6.7","5"],["Targets","31","30"],["Rec","22","18"],["Rec Yds","166","164"],["Rec TD","0.7","0"]]},
+{name:"Jayden Daniels",team:"WSH",pos:"QB",bye:7,posrk:4,ovr:99,fps:314.1,auc:7.6,vorp:28.9,g25:7,stats:[["Comp/Att","319/483","114/188"],["Pass Yds","3,519","1,262"],["Pass TD","22.3","8"],["INT","9.1","3"],["Rush Yds","734","278"],["Rush TD","4.8","2"]]},
+{name:"Aaron Jones",team:"MIN",pos:"RB",bye:6,posrk:37,ovr:100,fps:142.5,auc:6.9,vorp:26.4,g25:12,stats:[["Rush Att","155","132"],["Rush Yds","643","548"],["Rush TD","3.9","2"],["Targets","50","41"],["Rec","38","28"],["Rec Yds","273","199"],["Rec TD","1.4","1"]]},
+{name:"Rashid Shaheed",team:"SEA",pos:"WR",bye:11,posrk:58,ovr:101,fps:113.8,auc:6.5,vorp:24.7,g25:18,stats:[["Targets","75","92"],["Rec","42","59"],["Rec Yds","584","687"],["Rec TD","4.0","2"]]},
+{name:"Jalen Nailor",team:"LV",pos:"WR",bye:13,posrk:57,ovr:102,fps:112.5,auc:6.1,vorp:23.4,g25:17,stats:[["Targets","84","53"],["Rec","51","29"],["Rec Yds","650","444"],["Rec TD","3.7","4"]]},
+{name:"Sam LaPorta",team:"DET",pos:"TE",bye:6,posrk:6,ovr:103,fps:155.9,auc:5.3,vorp:20.4,g25:9,stats:[["Targets","102","49"],["Rec","75","40"],["Rec Yds","826","489"],["Rec TD","5.9","3"]]},
+{name:"Dak Prescott",team:"DAL",pos:"QB",bye:14,posrk:7,ovr:104,fps:309.0,auc:5.3,vorp:20.0,g25:17,stats:[["Comp/Att","406/603","404/600"],["Pass Yds","4,543","4,552"],["Pass TD","31.2","30"],["INT","12.3","10"],["Rush Yds","169","177"],["Rush TD","1.7","2"]]},
+{name:"Brock Purdy",team:"SF",pos:"QB",bye:8,posrk:11,ovr:105,fps:309.1,auc:5.3,vorp:20.4,g25:9,stats:[["Comp/Att","361/537","197/284"],["Pass Yds","4,294","2,167"],["Pass TD","29.2","20"],["INT","15.4","10"],["Rush Yds","276","147"],["Rush TD","3.9","3"]]},
+{name:"Harold Fannin",team:"CLE",pos:"TE",bye:11,posrk:4,ovr:106,fps:154.0,auc:4.8,vorp:18.5,g25:16,stats:[["Targets","119","107"],["Rec","78","72"],["Rec Yds","823","731"],["Rec TD","5.5","6"]]},
+{name:"Blake Corum",team:"LAR",pos:"RB",bye:11,posrk:35,ovr:107,fps:132.2,auc:4.8,vorp:18.1,g25:17,stats:[["Rush Att","156","145"],["Rush Yds","744","746"],["Rush TD","6.5","6"],["Targets","21","14"],["Rec","13","8"],["Rec Yds","81","36"],["Rec TD","0.7","0"]]},
+{name:"Jordan Mason",team:"MIN",pos:"RB",bye:6,posrk:36,ovr:108,fps:132.1,auc:4.7,vorp:18.0,g25:16,stats:[["Rush Att","175","159"],["Rush Yds","796","758"],["Rush TD","6.7","6"],["Targets","13","16"],["Rec","10","14"],["Rec Yds","61","51"],["Rec TD","0.3","0"]]},
+{name:"Caleb Williams",team:"CHI",pos:"QB",bye:10,posrk:10,ovr:109,fps:308.9,auc:4.6,vorp:17.4,g25:17,stats:[["Comp/Att","343/564","330/568"],["Pass Yds","4,087","3,942"],["Pass TD","27.6","27"],["INT","8.2","7"],["Rush Yds","347","388"],["Rush TD","2.8","3"]]},
+{name:"Tucker Kraft",team:"GB",pos:"TE",bye:11,posrk:7,ovr:110,fps:152.7,auc:4.5,vorp:17.1,g25:8,stats:[["Targets","92","44"],["Rec","66","32"],["Rec Yds","814","489"],["Rec TD","6.4","6"]]},
+{name:"Antonio Williams",team:"WSH",pos:"WR",bye:7,posrk:59,ovr:111,fps:106.3,auc:4.5,vorp:17.2,g25:null,stats:[["Targets","72",""],["Rec","51",""],["Rec Yds","589",""],["Rec TD","3.7",""]]},
+{name:"Trevor Lawrence",team:"JAX",pos:"QB",bye:7,posrk:9,ovr:112,fps:308.1,auc:4.4,vorp:16.6,g25:17,stats:[["Comp/Att","349/565","341/560"],["Pass Yds","3,994","4,007"],["Pass TD","26.2","29"],["INT","13.3","12"],["Rush Yds","337","359"],["Rush TD","6.1","9"]]},
+{name:"Tyquan Thornton",team:"KC",pos:"WR",bye:5,posrk:70,ovr:113,fps:105.4,auc:4.3,vorp:16.3,g25:14,stats:[["Targets","63","37"],["Rec","36","19"],["Rec Yds","594","438"],["Rec TD","4.7","3"]]},
+{name:"Calvin Ridley",team:"TEN",pos:"WR",bye:9,posrk:78,ovr:114,fps:105.4,auc:4.3,vorp:16.3,g25:7,stats:[["Targets","81","36"],["Rec","44","17"],["Rec Yds","617","303"],["Rec TD","3.7","0"]]},
+{name:"Patrick Mahomes",team:"KC",pos:"QB",bye:5,posrk:13,ovr:115,fps:307.6,auc:3.9,vorp:14.9,g25:14,stats:[["Comp/Att","369/568","315/502"],["Pass Yds","4,052","3,587"],["Pass TD","30.3","22"],["INT","12.1","11"],["Rush Yds","327","422"],["Rush TD","2.6","5"]]},
+{name:"Jaxson Dart",team:"NYG",pos:"QB",bye:8,posrk:8,ovr:116,fps:307.6,auc:3.7,vorp:14.1,g25:14,stats:[["Comp/Att","309/479","216/339"],["Pass Yds","3,355","2,272"],["Pass TD","22.2","15"],["INT","8.4","5"],["Rush Yds","557","487"],["Rush TD","7.6","9"]]},
+{name:"Emanuel Wilson",team:"SEA",pos:"RB",bye:11,posrk:44,ovr:117,fps:127.2,auc:3.7,vorp:14.1,g25:17,stats:[["Rush Att","150","125"],["Rush Yds","647","496"],["Rush TD","5.4","3"],["Targets","25","17"],["Rec","19","15"],["Rec Yds","155","99"],["Rec TD","0.8","0"]]},
+{name:"Adonai Mitchell",team:"NYJ",pos:"WR",bye:13,posrk:85,ovr:118,fps:101.9,auc:3.4,vorp:12.8,g25:16,stats:[["Targets","74","74"],["Rec","46","33"],["Rec Yds","593","453"],["Rec TD","3.3","2"]]},
+{name:"Travis Kelce",team:"KC",pos:"TE",bye:5,posrk:11,ovr:119,fps:147.7,auc:3.2,vorp:12.2,g25:17,stats:[["Targets","107","108"],["Rec","74","76"],["Rec Yds","782","851"],["Rec TD","5.4","5"]]},
+{name:"Andrei Iosivas",team:"CIN",pos:"WR",bye:6,posrk:65,ovr:120,fps:101.5,auc:3.2,vorp:12.4,g25:17,stats:[["Targets","69","58"],["Rec","47","33"],["Rec Yds","526","435"],["Rec TD","4.0","2"]]},
+{name:"Rachaad White",team:"WSH",pos:"RB",bye:7,posrk:38,ovr:121,fps:124.0,auc:3.0,vorp:11.6,g25:17,stats:[["Rush Att","108","132"],["Rush Yds","458","572"],["Rush TD","3.1","4"],["Targets","51","45"],["Rec","41","40"],["Rec Yds","283","218"],["Rec TD","1.7","0"]]},
+{name:"Jacory Croskey-Merritt",team:"WSH",pos:"RB",bye:7,posrk:40,ovr:122,fps:123.7,auc:3.0,vorp:11.3,g25:17,stats:[["Rush Att","151","175"],["Rush Yds","682","805"],["Rush TD","5.7","8"],["Targets","20","13"],["Rec","15","9"],["Rec Yds","109","68"],["Rec TD","0.5","0"]]},
+{name:"KC Concepcion",team:"CLE",pos:"WR",bye:11,posrk:55,ovr:123,fps:100.0,auc:2.9,vorp:10.9,g25:null,stats:[["Targets","80",""],["Rec","44",""],["Rec Yds","571",""],["Rec TD","2.9",""]]},
+{name:"Denzel Boston",team:"CLE",pos:"WR",bye:11,posrk:73,ovr:124,fps:100.1,auc:2.9,vorp:11.0,g25:null,stats:[["Targets","84",""],["Rec","44",""],["Rec Yds","598",""],["Rec TD","3.0",""]]},
+{name:"Chris Rodriguez",team:"JAX",pos:"RB",bye:7,posrk:41,ovr:125,fps:123.0,auc:2.8,vorp:10.8,g25:13,stats:[["Rush Att","163","112"],["Rush Yds","711","500"],["Rush TD","6.4","6"],["Targets","15","4"],["Rec","10","3"],["Rec Yds","69","30"],["Rec TD","0.3","0"]]},
+{name:"Caleb Douglas",team:"MIA",pos:"WR",bye:6,posrk:67,ovr:126,fps:99.6,auc:2.7,vorp:10.5,g25:null,stats:[["Targets","76",""],["Rec","43",""],["Rec Yds","611",""],["Rec TD","2.8",""]]},
+{name:"Isaiah Likely",team:"NYG",pos:"TE",bye:8,posrk:10,ovr:127,fps:145.2,auc:2.5,vorp:9.7,g25:14,stats:[["Targets","97","36"],["Rec","70","27"],["Rec Yds","768","307"],["Rec TD","5.5","1"]]},
+{name:"J.K. Dobbins",team:"DEN",pos:"RB",bye:10,posrk:39,ovr:128,fps:120.3,auc:2.3,vorp:8.6,g25:10,stats:[["Rush Att","154","153"],["Rush Yds","736","772"],["Rush TD","4.8","4"],["Targets","22","14"],["Rec","15","11"],["Rec Yds","74","37"],["Rec TD","0.5","0"]]},
+{name:"Jonathon Brooks",team:"CAR",pos:"RB",bye:5,posrk:42,ovr:129,fps:119.8,auc:2.1,vorp:8.2,g25:null,stats:[["Rush Att","139",""],["Rush Yds","590",""],["Rush TD","3.3",""],["Targets","40",""],["Rec","29",""],["Rec Yds","210",""],["Rec TD","0.9",""]]},
+{name:"George Kittle",team:"SF",pos:"TE",bye:8,posrk:9,ovr:130,fps:143.2,auc:2.0,vorp:7.7,g25:11,stats:[["Targets","79","69"],["Rec","62","57"],["Rec Yds","738","628"],["Rec TD","6.4","7"]]},
+{name:"Jerry Jeudy",team:"CLE",pos:"WR",bye:11,posrk:61,ovr:131,fps:95.2,auc:1.6,vorp:6.1,g25:17,stats:[["Targets","83","106"],["Rec","45","50"],["Rec Yds","554","602"],["Rec TD","2.9","2"]]},
+{name:"Kyle Pitts",team:"ATL",pos:"TE",bye:11,posrk:8,ovr:132,fps:141.2,auc:1.5,vorp:5.7,g25:17,stats:[["Targets","108","118"],["Rec","74","88"],["Rec Yds","807","928"],["Rec TD","4.0","5"]]},
+{name:"Jalen McMillan",team:"TB",pos:"WR",bye:10,posrk:60,ovr:133,fps:94.9,auc:1.5,vorp:5.8,g25:null,stats:[["Targets","63",""],["Rec","39",""],["Rec Yds","516",""],["Rec TD","3.4",""]]},
+{name:"Bo Nix",team:"DEN",pos:"QB",bye:10,posrk:14,ovr:134,fps:299.7,auc:1.1,vorp:4.3,g25:17,stats:[["Comp/Att","370/571","388/612"],["Pass Yds","3,914","3,931"],["Pass TD","26.3","25"],["INT","11.4","11"],["Rush Yds","353","356"],["Rush TD","4.3","5"]]},
+{name:"Jared Goff",team:"DET",pos:"QB",bye:6,posrk:17,ovr:135,fps:299.5,auc:1.0,vorp:4.0,g25:17,stats:[["Comp/Att","403/585","393/578"],["Pass Yds","4,643","4,564"],["Pass TD","32.2","34"],["INT","11.0","8"],["Rush Yds","39","45"],["Rush TD","0.5","0"]]},
+{name:"Germie Bernard",team:"PIT",pos:"WR",bye:9,posrk:71,ovr:136,fps:91.9,auc:0.7,vorp:2.8,g25:null,stats:[["Targets","77",""],["Rec","46",""],["Rec Yds","490",""],["Rec TD","2.8",""]]},
+{name:"Tre Tucker",team:"LV",pos:"WR",bye:13,posrk:72,ovr:137,fps:91.8,auc:0.7,vorp:2.7,g25:17,stats:[["Targets","70","92"],["Rec","40","57"],["Rec Yds","475","696"],["Rec TD","2.8","5"]]},
+{name:"Matthew Stafford",team:"LAR",pos:"QB",bye:11,posrk:15,ovr:138,fps:298.5,auc:0.6,vorp:2.2,g25:17,stats:[["Comp/Att","372/571","388/597"],["Pass Yds","4,323","4,707"],["Pass TD","34.6","46"],["INT","9.8","8"],["Rush Yds","32","1"],["Rush TD","0.6","0"]]},
+{name:"Jack Bech",team:"LV",pos:"WR",bye:13,posrk:66,ovr:139,fps:91.5,auc:0.6,vorp:2.4,g25:16,stats:[["Targets","76","29"],["Rec","48","20"],["Rec Yds","531","224"],["Rec TD","2.4","0"]]},
+{name:"Ryan Flournoy",team:"DAL",pos:"WR",bye:14,posrk:75,ovr:140,fps:90.3,auc:0.3,vorp:1.2,g25:16,stats:[["Targets","55","56"],["Rec","42","40"],["Rec Yds","473","475"],["Rec TD","3.7","4"]]},
+{name:"Justin Herbert",team:"LAC",pos:"QB",bye:7,posrk:12,ovr:141,fps:297.3,auc:0.2,vorp:0.6,g25:16,stats:[["Comp/Att","352/532","340/512"],["Pass Yds","4,029","3,727"],["Pass TD","26.4","26"],["INT","10.1","13"],["Rush Yds","384","498"],["Rush TD","2.0","2"]]},
+{name:"Malik Washington",team:"MIA",pos:"WR",bye:6,posrk:81,ovr:142,fps:89.6,auc:0.1,vorp:0.5,g25:17,stats:[["Targets","71","65"],["Rec","50","46"],["Rec Yds","456","317"],["Rec TD","2.2","3"]]},
+{name:"Jake Ferguson",team:"DAL",pos:"TE",bye:14,posrk:12,ovr:143,fps:135.5,auc:0,vorp:0,g25:17,stats:[["Targets","100","102"],["Rec","75","82"],["Rec Yds","607","600"],["Rec TD","6.3","8"]]},
+{name:"Dalton Kincaid",team:"BUF",pos:"TE",bye:7,posrk:13,ovr:144,fps:122.8,auc:0,vorp:-12.7,g25:12,stats:[["Targets","80","49"],["Rec","55","39"],["Rec Yds","665","571"],["Rec TD","4.8","5"]]},
+{name:"Mark Andrews",team:"BAL",pos:"TE",bye:13,posrk:14,ovr:145,fps:128.8,auc:0,vorp:-6.8,g25:17,stats:[["Targets","84","70"],["Rec","56","48"],["Rec Yds","601","422"],["Rec TD","6.8","5"]]},
+{name:"Brenton Strange",team:"JAX",pos:"TE",bye:7,posrk:15,ovr:146,fps:103.4,auc:0,vorp:-32.1,g25:12,stats:[["Targets","78","60"],["Rec","51","46"],["Rec Yds","558","540"],["Rec TD","3.7","3"]]},
+{name:"Kyler Murray",team:"MIN",pos:"QB",bye:6,posrk:16,ovr:147,fps:285.1,auc:0,vorp:-12.3,g25:5,stats:[["Comp/Att","350/514","110/161"],["Pass Yds","3,673","962"],["Pass TD","22.4","6"],["INT","10.2","3"],["Rush Yds","467","173"],["Rush TD","3.7","1"]]},
+{name:"Dallas Goedert",team:"PHI",pos:"TE",bye:10,posrk:16,ovr:148,fps:114.1,auc:0,vorp:-21.4,g25:15,stats:[["Targets","79","82"],["Rec","55","60"],["Rec Yds","559","591"],["Rec TD","5.1","11"]]},
+{name:"T.J. Hockenson",team:"MIN",pos:"TE",bye:6,posrk:17,ovr:149,fps:122.3,auc:0,vorp:-13.3,g25:15,stats:[["Targets","96","66"],["Rec","70","51"],["Rec Yds","617","438"],["Rec TD","4.2","3"]]},
+{name:"Baker Mayfield",team:"TB",pos:"QB",bye:10,posrk:18,ovr:150,fps:281.6,auc:0,vorp:-16.2,g25:17,stats:[["Comp/Att","360/552","343/543"],["Pass Yds","3,995","3,693"],["Pass TD","27.0","26"],["INT","12.9","11"],["Rush Yds","329","382"],["Rush TD","1.2","1"]]},
+{name:"Hunter Henry",team:"NE",pos:"TE",bye:11,posrk:18,ovr:151,fps:128.7,auc:0,vorp:-6.9,g25:17,stats:[["Targets","84","87"],["Rec","58","60"],["Rec Yds","676","768"],["Rec TD","5.3","7"]]},
+{name:"Malik Willis",team:"MIA",pos:"QB",bye:6,posrk:19,ovr:152,fps:278.2,auc:0,vorp:-19.9,g25:4,stats:[["Comp/Att","322/487","30/35"],["Pass Yds","3,463","422"],["Pass TD","18.0","3"],["INT","10.3","0"],["Rush Yds","599","123"],["Rush TD","4.7","2"]]},
+{name:"Greg Dulcich",team:"MIA",pos:"TE",bye:6,posrk:19,ovr:153,fps:110.7,auc:0,vorp:-24.9,g25:10,stats:[["Targets","80","33"],["Rec","54","26"],["Rec Yds","625","335"],["Rec TD","3.5","1"]]},
+{name:"Tyler Shough",team:"NO",pos:"QB",bye:8,posrk:20,ovr:154,fps:268.6,auc:0,vorp:-38.2,g25:11,stats:[["Comp/Att","333/503","221/327"],["Pass Yds","3,631","2,384"],["Pass TD","22.0","10"],["INT","10.0","6"],["Rush Yds","312","186"],["Rush TD","4.0","3"]]},
+{name:"Chig Okonkwo",team:"WSH",pos:"TE",bye:7,posrk:20,ovr:155,fps:117.6,auc:0,vorp:-17.9,g25:17,stats:[["Targets","85","79"],["Rec","61","56"],["Rec Yds","627","560"],["Rec TD","4.1","2"]]},
+{name:"Jordan Love",team:"GB",pos:"QB",bye:11,posrk:21,ovr:156,fps:275.5,auc:0,vorp:-30.6,g25:15,stats:[["Comp/Att","341/524","291/439"],["Pass Yds","4,029","3,381"],["Pass TD","27.3","23"],["INT","10.4","6"],["Rush Yds","193","199"],["Rush TD","1.1","0"]]},
+{name:"Dalton Schultz",team:"HOU",pos:"TE",bye:8,posrk:21,ovr:157,fps:120.5,auc:0,vorp:-15.1,g25:17,stats:[["Targets","92","106"],["Rec","68","82"],["Rec Yds","643","777"],["Rec TD","3.7","3"]]},
+{name:"C.J. Stroud",team:"HOU",pos:"QB",bye:8,posrk:22,ovr:158,fps:268.5,auc:0,vorp:-38.9,g25:14,stats:[["Comp/Att","371/579","273/423"],["Pass Yds","4,148","3,041"],["Pass TD","24.5","19"],["INT","12.1","8"],["Rush Yds","225","209"],["Rush TD","1.1","1"]]},
+{name:"Kenyon Sadiq",team:"NYJ",pos:"TE",bye:13,posrk:22,ovr:159,fps:86.8,auc:0,vorp:-48.7,g25:null,stats:[["Targets","65",""],["Rec","47",""],["Rec Yds","454",""],["Rec TD","3.0",""]]},
+{name:"Cam Ward",team:"TEN",pos:"QB",bye:9,posrk:23,ovr:160,fps:261.6,auc:0,vorp:-47.6,g25:17,stats:[["Comp/Att","348/549","323/540"],["Pass Yds","3,775","3,169"],["Pass TD","23.0","15"],["INT","9.1","7"],["Rush Yds","212","159"],["Rush TD","2.6","2"]]},
+{name:"Pat Freiermuth",team:"PIT",pos:"TE",bye:9,posrk:23,ovr:161,fps:109.1,auc:0,vorp:-26.5,g25:17,stats:[["Targets","80","54"],["Rec","55","41"],["Rec Yds","563","486"],["Rec TD","4.2","4"]]},
+{name:"Daniel Jones",team:"IND",pos:"QB",bye:13,posrk:24,ovr:162,fps:262.2,auc:0,vorp:-45.1,g25:13,stats:[["Comp/Att","319/480","261/384"],["Pass Yds","3,479","3,101"],["Pass TD","21.4","19"],["INT","10.7","8"],["Rush Yds","285","164"],["Rush TD","5.1","5"]]},
+{name:"Juwan Johnson",team:"NO",pos:"TE",bye:8,posrk:24,ovr:163,fps:98.5,auc:0,vorp:-37.0,g25:17,stats:[["Targets","74","102"],["Rec","51","77"],["Rec Yds","557","889"],["Rec TD","2.9","3"]]},
+{name:"Sam Darnold",team:"SEA",pos:"QB",bye:11,posrk:25,ovr:164,fps:261.6,auc:0,vorp:-45.7,g25:17,stats:[["Comp/Att","336/505","323/477"],["Pass Yds","4,135","4,048"],["Pass TD","26.5","25"],["INT","13.0","14"],["Rush Yds","110","95"],["Rush TD","0.9","0"]]},
+{name:"David Njoku",team:"LAC",pos:"TE",bye:7,posrk:25,ovr:165,fps:77.2,auc:0,vorp:-58.3,g25:12,stats:[["Targets","54","48"],["Rec","39","33"],["Rec Yds","407","293"],["Rec TD","2.8","4"]]},
+{name:"Bryce Young",team:"CAR",pos:"QB",bye:5,posrk:26,ovr:166,fps:245.7,auc:0,vorp:-64.5,g25:16,stats:[["Comp/Att","333/522","304/478"],["Pass Yds","3,466","3,011"],["Pass TD","23.3","23"],["INT","12.0","11"],["Rush Yds","244","216"],["Rush TD","2.2","2"]]},
+{name:"Jacoby Brissett",team:"ARI",pos:"QB",bye:14,posrk:27,ovr:167,fps:238.0,auc:0,vorp:-72.8,g25:14,stats:[["Comp/Att","328/511","315/485"],["Pass Yds","3,422","3,366"],["Pass TD","22.6","23"],["INT","8.4","8"],["Rush Yds","209","168"],["Rush TD","1.1","1"]]},
+{name:"Aaron Rodgers",team:"PIT",pos:"QB",bye:9,posrk:28,ovr:168,fps:229.9,auc:0,vorp:-83.0,g25:16,stats:[["Comp/Att","353/551","327/498"],["Pass Yds","3,667","3,322"],["Pass TD","23.1","24"],["INT","9.9","7"],["Rush Yds","65","61"],["Rush TD","0.7","1"]]},
+{name:"Tua Tagovailoa",team:"ATL",pos:"QB",bye:11,posrk:29,ovr:169,fps:215.2,auc:0,vorp:-98.9,g25:14,stats:[["Comp/Att","348/521","260/384"],["Pass Yds","3,842","2,660"],["Pass TD","20.7","20"],["INT","12.8","15"],["Rush Yds","32","43"],["Rush TD","0.2","0"]]},
+{name:"Geno Smith",team:"NYJ",pos:"QB",bye:13,posrk:30,ovr:170,fps:214.1,auc:0,vorp:-100.6,g25:15,stats:[["Comp/Att","353/516","302/448"],["Pass Yds","3,634","3,025"],["Pass TD","20.1","19"],["INT","15.2","17"],["Rush Yds","141","109"],["Rush TD","0.7","0"]]},
+{name:"Shedeur Sanders",team:"CLE",pos:"QB",bye:11,posrk:31,ovr:171,fps:114.6,auc:0,vorp:-201.3,g25:8,stats:[["Comp/Att","149/252","120/212"],["Pass Yds","1,653","1,400"],["Pass TD","9.0","7"],["INT","8.9","10"],["Rush Yds","216","169"],["Rush TD","1.5","1"]]},
+{name:"Kirk Cousins",team:"LV",pos:"QB",bye:13,posrk:32,ovr:172,fps:132.5,auc:0,vorp:-183.1,g25:10,stats:[["Comp/Att","231/361","166/269"],["Pass Yds","2,421","1,721"],["Pass TD","13.4","10"],["INT","9.2","5"],["Rush Yds","3","7"],["Rush TD","0.0","1"]]},
+{name:"Isiah Pacheco",team:"DET",pos:"RB",bye:6,posrk:43,ovr:173,fps:109.5,auc:0,vorp:0,g25:13,stats:[["Rush Att","134","118"],["Rush Yds","560","462"],["Rush TD","5.4","1"],["Targets","22","26"],["Rec","14","19"],["Rec Yds","96","101"],["Rec TD","0.8","1"]]},
+{name:"Alvin Kamara",team:"NO",pos:"RB",bye:8,posrk:45,ovr:174,fps:98.7,auc:0,vorp:-8.7,g25:11,stats:[["Rush Att","122","131"],["Rush Yds","477","471"],["Rush TD","2.5","1"],["Targets","35","39"],["Rec","26","33"],["Rec Yds","183","186"],["Rec TD","0.9","0"]]},
+{name:"Tyrone Tracy",team:"NYG",pos:"RB",bye:8,posrk:46,ovr:175,fps:93.3,auc:0,vorp:-13.0,g25:15,stats:[["Rush Att","114","176"],["Rush Yds","469","740"],["Rush TD","3.3","2"],["Targets","22","48"],["Rec","18","36"],["Rec Yds","128","288"],["Rec TD","0.8","2"]]},
+{name:"Dylan Sampson",team:"CLE",pos:"RB",bye:11,posrk:47,ovr:176,fps:91.1,auc:0,vorp:-14.7,g25:15,stats:[["Rush Att","100","65"],["Rush Yds","377","175"],["Rush TD","1.5","0"],["Targets","38","40"],["Rec","29","33"],["Rec Yds","221","271"],["Rec TD","1.3","2"]]},
+{name:"Tyler Allgeier",team:"ARI",pos:"RB",bye:14,posrk:48,ovr:177,fps:80.2,auc:0,vorp:-23.5,g25:17,stats:[["Rush Att","110","143"],["Rush Yds","451","514"],["Rush TD","3.0","8"],["Targets","17","16"],["Rec","13","14"],["Rec Yds","85","96"],["Rec TD","0.4","0"]]},
+{name:"Woody Marks",team:"HOU",pos:"RB",bye:8,posrk:49,ovr:178,fps:98.1,auc:0,vorp:-9.1,g25:16,stats:[["Rush Att","125","196"],["Rush Yds","480","703"],["Rush TD","3.4","2"],["Targets","30","36"],["Rec","21","24"],["Rec Yds","154","208"],["Rec TD","0.7","3"]]},
+{name:"Brian Robinson",team:"ATL",pos:"RB",bye:11,posrk:50,ovr:179,fps:85.3,auc:0,vorp:-19.4,g25:17,stats:[["Rush Att","111","92"],["Rush Yds","472","400"],["Rush TD","4.5","2"],["Targets","11","12"],["Rec","8","8"],["Rec Yds","55","25"],["Rec TD","0.2","0"]]},
+{name:"Justice Hill",team:"BAL",pos:"RB",bye:13,posrk:51,ovr:180,fps:92.6,auc:0,vorp:-13.6,g25:10,stats:[["Rush Att","39","18"],["Rush Yds","190","93"],["Rush TD","1.4","2"],["Targets","48","27"],["Rec","38","21"],["Rec Yds","328","169"],["Rec TD","2.1","1"]]},
+{name:"Braelon Allen",team:"NYJ",pos:"RB",bye:13,posrk:52,ovr:181,fps:86.1,auc:0,vorp:-18.7,g25:null,stats:[["Rush Att","106",""],["Rush Yds","453",""],["Rush TD","3.8",""],["Targets","17",""],["Rec","13",""],["Rec Yds","100",""],["Rec TD","0.3",""]]},
+{name:"Tyjae Spears",team:"TEN",pos:"RB",bye:9,posrk:53,ovr:182,fps:75.6,auc:0,vorp:-27.2,g25:13,stats:[["Rush Att","75","72"],["Rush Yds","303","283"],["Rush TD","1.8","2"],["Targets","35","50"],["Rec","25","45"],["Rec Yds","168","264"],["Rec TD","0.9","0"]]},
+{name:"Tank Bigsby",team:"PHI",pos:"RB",bye:10,posrk:54,ovr:183,fps:80.7,auc:0,vorp:-23.1,g25:17,stats:[["Rush Att","109","63"],["Rush Yds","522","356"],["Rush TD","3.9","2"],["Targets","5","4"],["Rec","4","3"],["Rec Yds","24","32"],["Rec TD","0.1","0"]]},
+{name:"Ty Johnson",team:"BUF",pos:"RB",bye:7,posrk:55,ovr:184,fps:78.4,auc:0,vorp:-24.9,g25:17,stats:[["Rush Att","58","50"],["Rush Yds","245","200"],["Rush TD","2.1","3"],["Targets","30","33"],["Rec","24","24"],["Rec Yds","206","263"],["Rec TD","1.5","2"]]},
+{name:"Mike Washington",team:"LV",pos:"RB",bye:13,posrk:56,ovr:185,fps:64.4,auc:0,vorp:-36.1,g25:null,stats:[["Rush Att","108",""],["Rush Yds","440",""],["Rush TD","2.3",""],["Targets","8",""],["Rec","5",""],["Rec Yds","36",""],["Rec TD","0.1",""]]},
+{name:"Jonah Coleman",team:"DEN",pos:"RB",bye:10,posrk:57,ovr:186,fps:47.6,auc:0,vorp:-49.6,g25:null,stats:[["Rush Att","55",""],["Rush Yds","241",""],["Rush TD","2.3",""],["Targets","10",""],["Rec","7",""],["Rec Yds","51",""],["Rec TD","0.1",""]]},
+{name:"Kaytron Allen",team:"WSH",pos:"RB",bye:7,posrk:58,ovr:187,fps:62.7,auc:0,vorp:-37.5,g25:null,stats:[["Rush Att","88",""],["Rush Yds","379",""],["Rush TD","2.9",""],["Targets","7",""],["Rec","5",""],["Rec Yds","37",""],["Rec TD","0.2",""]]},
+{name:"Keaton Mitchell",team:"LAC",pos:"RB",bye:7,posrk:59,ovr:188,fps:56.9,auc:0,vorp:-42.1,g25:13,stats:[["Rush Att","62","59"],["Rush Yds","274","341"],["Rush TD","1.8","1"],["Targets","19","12"],["Rec","13","9"],["Rec Yds","98","63"],["Rec TD","0.4","0"]]},
+{name:"Emmett Johnson",team:"KC",pos:"RB",bye:5,posrk:60,ovr:189,fps:60.6,auc:0,vorp:-39.1,g25:null,stats:[["Rush Att","46",""],["Rush Yds","192",""],["Rush TD","1.6",""],["Targets","29",""],["Rec","21",""],["Rec Yds","154",""],["Rec TD","1.0",""]]},
+{name:"Ollie Gordon",team:"MIA",pos:"RB",bye:6,posrk:61,ovr:190,fps:48.1,auc:0,vorp:-49.2,g25:17,stats:[["Rush Att","82","70"],["Rush Yds","322","199"],["Rush TD","1.8","3"],["Targets","5","9"],["Rec","4","7"],["Rec Yds","24","32"],["Rec TD","0.1","1"]]},
+{name:"Jaydon Blue",team:"DAL",pos:"RB",bye:14,posrk:62,ovr:191,fps:50.1,auc:0,vorp:-47.6,g25:null,stats:[["Rush Att","58",""],["Rush Yds","237",""],["Rush TD","1.5",""],["Targets","20",""],["Rec","13",""],["Rec Yds","87",""],["Rec TD","0.3",""]]},
+{name:"Deebo Samuel",team:"",pos:"WR",bye:0,posrk:62,ovr:192,fps:0.0,auc:0.0,vorp:null,g25:16,stats:[["Targets","0","99"],["Rec","0","72"],["Rec Yds","0","727"],["Rec TD","0.0","5"]]},
+{name:"Samaje Perine",team:"CIN",pos:"RB",bye:6,posrk:63,ovr:193,fps:88.4,auc:0,vorp:-16.9,g25:15,stats:[["Rush Att","90","84"],["Rush Yds","397","382"],["Rush TD","2.7","3"],["Targets","27","21"],["Rec","22","17"],["Rec Yds","150","87"],["Rec TD","1.0","0"]]},
+{name:"Stefon Diggs",team:"",pos:"WR",bye:0,posrk:63,ovr:194,fps:0.0,auc:0.0,vorp:null,g25:17,stats:[["Targets","0","102"],["Rec","0","85"],["Rec Yds","0","1,013"],["Rec TD","0.0","4"]]},
+{name:"Chris Brooks",team:"GB",pos:"RB",bye:11,posrk:64,ovr:195,fps:60.3,auc:0,vorp:-39.4,g25:null,stats:[["Rush Att","70",""],["Rush Yds","291",""],["Rush TD","2.0",""],["Targets","17",""],["Rec","15",""],["Rec Yds","96",""],["Rec TD","0.4",""]]},
+{name:"Brandon Aiyuk",team:"",pos:"WR",bye:0,posrk:64,ovr:196,fps:0.0,auc:0.0,vorp:null,g25:null,stats:[["Targets","0",""],["Rec","0",""],["Rec Yds","0",""],["Rec TD","0.0",""]]},
+{name:"Kimani Vidal",team:"LAC",pos:"RB",bye:7,posrk:65,ovr:197,fps:55.3,auc:0,vorp:-43.4,g25:13,stats:[["Rush Att","68","155"],["Rush Yds","286","643"],["Rush TD","1.8","3"],["Targets","14","22"],["Rec","11","16"],["Rec Yds","85","136"],["Rec TD","0.4","1"]]},
+{name:"Nicholas Singleton",team:"TEN",pos:"RB",bye:9,posrk:66,ovr:198,fps:50.9,auc:0,vorp:-46.9,g25:null,stats:[["Rush Att","71",""],["Rush Yds","303",""],["Rush TD","2.1",""],["Targets","8",""],["Rec","6",""],["Rec Yds","37",""],["Rec TD","0.2",""]]},
+{name:"Ray Davis",team:"BUF",pos:"RB",bye:7,posrk:67,ovr:199,fps:49.4,auc:0,vorp:-48.1,g25:17,stats:[["Rush Att","54","58"],["Rush Yds","247","275"],["Rush TD","1.6","0"],["Targets","11","13"],["Rec","9","10"],["Rec Yds","71","86"],["Rec TD","0.6","2"]]},
+{name:"MarShawn Lloyd",team:"GB",pos:"RB",bye:11,posrk:68,ovr:200,fps:53.2,auc:0,vorp:-45.1,g25:null,stats:[["Rush Att","73",""],["Rush Yds","300",""],["Rush TD","2.2",""],["Targets","11",""],["Rec","7",""],["Rec Yds","50",""],["Rec TD","0.3",""]]},
+{name:"Chris Bell",team:"MIA",pos:"WR",bye:6,posrk:68,ovr:201,fps:89.1,auc:0,vorp:0,g25:null,stats:[["Targets","68",""],["Rec","40",""],["Rec Yds","532",""],["Rec TD","2.7",""]]},
+{name:"Jordan James",team:"SF",pos:"RB",bye:8,posrk:69,ovr:202,fps:49.3,auc:0,vorp:-48.2,g25:null,stats:[["Rush Att","60",""],["Rush Yds","244",""],["Rush TD","1.7",""],["Targets","13",""],["Rec","11",""],["Rec Yds","74",""],["Rec TD","0.3",""]]},
+{name:"Kayshon Boutte",team:"NE",pos:"WR",bye:11,posrk:69,ovr:203,fps:61.9,auc:0,vorp:-27.2,g25:14,stats:[["Targets","37","46"],["Rec","26","33"],["Rec Yds","381","551"],["Rec TD","1.8","6"]]},
+{name:"Demond Claiborne",team:"MIN",pos:"RB",bye:6,posrk:70,ovr:204,fps:30.4,auc:0,vorp:-63.3,g25:null,stats:[["Rush Att","30",""],["Rush Yds","129",""],["Rush TD","1.0",""],["Targets","11",""],["Rec","9",""],["Rec Yds","56",""],["Rec TD","0.3",""]]},
+{name:"Jaylen Wright",team:"MIA",pos:"RB",bye:6,posrk:71,ovr:205,fps:28.5,auc:0,vorp:-64.8,g25:10,stats:[["Rush Att","34","70"],["Rush Yds","138","288"],["Rush TD","0.7","2"],["Targets","10","9"],["Rec","7","5"],["Rec Yds","57","44"],["Rec TD","0.2","0"]]},
+{name:"Sean Tucker",team:"TB",pos:"RB",bye:10,posrk:72,ovr:206,fps:38.5,auc:0,vorp:-56.8,g25:17,stats:[["Rush Att","62","86"],["Rush Yds","247","320"],["Rush TD","2.1","7"],["Targets","1","11"],["Rec","1","8"],["Rec Yds","6","34"],["Rec TD","0.0","1"]]},
+{name:"Trey Benson",team:"ARI",pos:"RB",bye:14,posrk:73,ovr:207,fps:35.4,auc:0,vorp:-59.3,g25:4,stats:[["Rush Att","46","29"],["Rush Yds","204","160"],["Rush TD","1.1","0"],["Targets","8","16"],["Rec","6","13"],["Rec Yds","42","64"],["Rec TD","0.2","0"]]},
+{name:"Kaelon Black",team:"SF",pos:"RB",bye:8,posrk:74,ovr:208,fps:42.8,auc:0,vorp:-53.4,g25:null,stats:[["Rush Att","67",""],["Rush Yds","268",""],["Rush TD","1.8",""],["Targets","5",""],["Rec","4",""],["Rec Yds","25",""],["Rec TD","0.1",""]]},
+{name:"Jauan Jennings",team:"MIN",pos:"WR",bye:6,posrk:74,ovr:209,fps:82.8,auc:0,vorp:-6.3,g25:15,stats:[["Targets","63","90"],["Rec","41","55"],["Rec Yds","452","643"],["Rec TD","2.9","9"]]},
+{name:"Brashard Smith",team:"KC",pos:"RB",bye:5,posrk:75,ovr:210,fps:45.0,auc:0,vorp:-51.6,g25:17,stats:[["Rush Att","35","44"],["Rush Yds","136","151"],["Rush TD","1.1","0"],["Targets","23","35"],["Rec","17","25"],["Rec Yds","122","172"],["Rec TD","0.7","1"]]},
+{name:"Isaac TeSlaa",team:"DET",pos:"WR",bye:6,posrk:76,ovr:211,fps:88.8,auc:0,vorp:-0.3,g25:17,stats:[["Targets","49","27"],["Rec","33","16"],["Rec Yds","452","239"],["Rec TD","4.5","6"]]},
+{name:"Rashod Bateman",team:"BAL",pos:"WR",bye:13,posrk:77,ovr:212,fps:88.2,auc:0,vorp:-0.9,g25:13,stats:[["Targets","53","38"],["Rec","33","19"],["Rec Yds","480","224"],["Rec TD","3.9","2"]]},
+{name:"Darnell Mooney",team:"NYG",pos:"WR",bye:8,posrk:79,ovr:213,fps:80.5,auc:0,vorp:-8.6,g25:15,stats:[["Targets","67","72"],["Rec","37","32"],["Rec Yds","461","443"],["Rec TD","2.7","1"]]},
+{name:"Zachariah Branch",team:"ATL",pos:"WR",bye:11,posrk:80,ovr:214,fps:69.5,auc:0,vorp:-19.6,g25:null,stats:[["Targets","57",""],["Rec","32",""],["Rec Yds","385",""],["Rec TD","2.2",""]]},
+{name:"Keenan Allen",team:"",pos:"WR",bye:0,posrk:82,ovr:215,fps:0.0,auc:0.0,vorp:null,g25:17,stats:[["Targets","0","122"],["Rec","0","81"],["Rec Yds","0","777"],["Rec TD","0.0","4"]]},
+{name:"Tyreek Hill",team:"",pos:"WR",bye:0,posrk:83,ovr:216,fps:0.0,auc:0.0,vorp:null,g25:4,stats:[["Targets","0","29"],["Rec","0","21"],["Rec Yds","0","265"],["Rec TD","0.0","1"]]},
+{name:"Cooper Kupp",team:"SEA",pos:"WR",bye:11,posrk:84,ovr:217,fps:88.0,auc:0,vorp:-1.1,g25:16,stats:[["Targets","61","70"],["Rec","40","47"],["Rec Yds","491","593"],["Rec TD","3.1","2"]]},
+{name:"Jaylin Noel",team:"HOU",pos:"WR",bye:8,posrk:86,ovr:218,fps:78.1,auc:0,vorp:-11.0,g25:17,stats:[["Targets","63","35"],["Rec","38","26"],["Rec Yds","417","292"],["Rec TD","2.4","2"]]},
+{name:"Tank Dell",team:"HOU",pos:"WR",bye:8,posrk:87,ovr:219,fps:73.2,auc:0,vorp:-15.9,g25:null,stats:[["Targets","54",""],["Rec","34",""],["Rec Yds","388",""],["Rec TD","2.9",""]]},
+{name:"Troy Franklin",team:"DEN",pos:"WR",bye:10,posrk:88,ovr:220,fps:66.4,auc:0,vorp:-22.7,g25:17,stats:[["Targets","49","104"],["Rec","30","65"],["Rec Yds","349","709"],["Rec TD","2.7","6"]]},
+{name:"Chris Brazzell",team:"CAR",pos:"WR",bye:5,posrk:89,ovr:221,fps:60.7,auc:0,vorp:-28.4,g25:null,stats:[["Targets","48",""],["Rec","26",""],["Rec Yds","328",""],["Rec TD","2.5",""]]},
+{name:"Tre' Harris",team:"LAC",pos:"WR",bye:7,posrk:90,ovr:222,fps:61.1,auc:0,vorp:-28.0,g25:17,stats:[["Targets","49","43"],["Rec","30","30"],["Rec Yds","358","324"],["Rec TD","1.7","1"]]}
+].map(p=>({...p,id:slug(p.name)+"-"+p.team.toLowerCase()}));
+const BY_ID = Object.fromEntries(PLAYERS.map(p=>[p.id,p]));
+
+const TABS=[{key:"overall",label:"Overall"},{key:"qb",label:"QB"},{key:"rb",label:"RB"},{key:"wr",label:"WR"},{key:"te",label:"TE"},{key:"flex",label:"Flex"}];
+const FLEX=new Set(["RB","WR","TE"]);
+
+const KEY="ff2026:board:v4";
+let store={master:[],drafted:[]};
+let drafted=new Set();
+let tiers={};
+let suppressNextClick=false;
+let active="overall";
+
+// One shared ranking. "master" holds every player in Overall order; each tab is
+// a filtered view of it, so a player's order relative to his position is the same
+// everywhere. Reordering in any tab writes back into master.
+function inTab(p,tab){
+  if(tab==="overall")return true;
+  if(tab==="flex")return FLEX.has(p.pos);
+  return p.pos===tab.toUpperCase();
+}
+function tabIds(tab){return store.master.filter(id=>inTab(BY_ID[id],tab));}
+function defaultMaster(){return PLAYERS.slice().sort((a,b)=>a.ovr-b.ovr).map(p=>p.id);}
+function defaultTabOrder(tab){
+  let pool=PLAYERS.slice();
+  if(tab==="flex"){pool=pool.filter(p=>FLEX.has(p.pos));pool.sort((a,b)=>a.ovr-b.ovr);}
+  else if(tab==="overall"){pool.sort((a,b)=>a.ovr-b.ovr);}
+  else{pool=pool.filter(p=>p.pos===tab.toUpperCase());pool.sort((a,b)=>a.posrk-b.posrk);}
+  return pool.map(p=>p.id);
+}
+// Write a new order for the active tab's members back into their slots in master,
+// leaving players not shown in this tab exactly where they are.
+function fillActiveOrder(orderedIds){
+  let i=0;
+  store.master=store.master.map(id=> inTab(BY_ID[id],active) ? orderedIds[i++] : id);
+}
+function reconcileMaster(saved){
+  const def=defaultMaster();const valid=new Set(def);
+  const kept=(saved||[]).filter(id=>valid.has(id));const keptSet=new Set(kept);
+  return [...kept,...def.filter(id=>!keptSet.has(id))];
+}
+const HAS_WS=(typeof window!=="undefined"&&window.storage&&typeof window.storage.get==="function");
+async function storeGet(k){
+  if(HAS_WS){try{return await window.storage.get(k);}catch(e){}}
+  try{const v=localStorage.getItem(k);return v?{value:v}:null;}catch(e){return null;}
+}
+async function storeSet(k,v){
+  if(HAS_WS){try{return await window.storage.set(k,v);}catch(e){}}
+  try{localStorage.setItem(k,v);}catch(e){}
+}
+async function load(){
+  try{const r=await storeGet(KEY);if(r&&r.value)store=JSON.parse(r.value);}catch(e){}
+  store.master=reconcileMaster(store.master);
+  drafted=new Set(store.drafted||[]);
+  tiers=(store.tiers&&!Array.isArray(store.tiers))?store.tiers:{};
+}
+let saveTimer=null;
+function save(){
+  store.drafted=[...drafted];store.tiers=tiers;clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{storeSet(KEY,JSON.stringify(store));},120);
+}
+
+const listEl=document.getElementById("list");
+const tabsEl=document.getElementById("tabs");
+
+function renderTabs(){
+  tabsEl.innerHTML="";
+  TABS.forEach(t=>{
+    const b=document.createElement("button");
+    b.className="tab"+(t.key===active?" on":"");
+    b.innerHTML=t.label+'<span class="cnt">'+tabIds(t.key).length+'</span>';
+    b.onclick=()=>{active=t.key;renderTabs();renderList();window.scrollTo({top:0,behavior:"smooth"});};
+    tabsEl.appendChild(b);
+  });
+}
+function cardHTML(id){
+  const p=BY_ID[id];const isD=drafted.has(id);
+  return '<li class="card'+(isD?" drafted":"")+'" data-id="'+id+'" style="--pc:'+POS_COLOR[p.pos]+'">'
+    +'<span class="grip" title="Drag to reorder"><svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor"><circle cx="4" cy="4" r="1.6"/><circle cx="10" cy="4" r="1.6"/><circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="4" cy="16" r="1.6"/><circle cx="10" cy="16" r="1.6"/></svg></span>'
+    +'<span class="rank"></span>'
+    +'<span class="meta"><div class="name">'+p.name+'</div><div class="team">'+p.team+' <span class="bye">· Bye '+p.bye+'</span></div></span>'
+    +'<span class="vorp"><span class="vval">'+fmtVorp(p.vorp)+'</span><span class="vlbl">VORP</span></span>'
+    +'<span class="pos">'+p.pos+'</span>'
+    +'<button class="draftbtn">'+(isD?"Undo":"Draft")+'</button></li>';
+}
+function renumber(){[...listEl.querySelectorAll(".card")].forEach((li,i)=>{li.querySelector(".rank").textContent=i+1;});}
+function isPosTab(t){return t==="qb"||t==="rb"||t==="wr"||t==="te";}
+const GRIP='<span class="grip" title="Drag"><svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor"><circle cx="4" cy="4" r="1.6"/><circle cx="10" cy="4" r="1.6"/><circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="4" cy="16" r="1.6"/><circle cx="10" cy="16" r="1.6"/></svg></span>';
+function tierLabel(n){return '<li class="tierbreak">'+GRIP+'<span class="tlabel">Tier '+n+'</span><span class="tline"></span><button class="tierx" title="Remove tier break">\u00d7</button></li>';}
+function renderList(){
+  closeCtx();
+  const ids=tabIds(active);
+  const br=isPosTab(active)?new Set((tiers[active]||[]).filter(k=>k>=1&&k<=ids.length-1)):new Set();
+  if(br.size){
+    let tier=1,html=tierLabel(1);
+    ids.forEach((id,i)=>{
+      if(i>0&&br.has(i)){tier++;html+=tierLabel(tier);}
+      html+=cardHTML(id);
+    });
+    listEl.innerHTML=html;
+  }else{
+    listEl.innerHTML=ids.map(cardHTML).join("");
+  }
+  renumber();applyFilter();
+}
+// Read player order + break slots back out of the DOM after any drag/edit.
+function syncFromDOM(){
+  const cardIds=[],bidx=[];let c=0;
+  [...listEl.children].forEach(li=>{
+    if(li.classList.contains("card")){cardIds.push(li.dataset.id);c++;}
+    else if(li.classList.contains("tierbreak"))bidx.push(c);
+  });
+  fillActiveOrder(cardIds);
+  if(isPosTab(active)){
+    const seen=new Set(),clean=[];
+    bidx.forEach(k=>{if(k>=1&&k<=cardIds.length-1&&!seen.has(k)){seen.add(k);clean.push(k);}});
+    tiers[active]=clean;
+  }
+  save();
+}
+function addBreakAbove(id){
+  const ids=tabIds(active),k=ids.indexOf(id);
+  if(k<=0)return;
+  const set=new Set(tiers[active]||[]);set.add(k);tiers[active]=[...set];save();renderList();
+}
+function removeBreakEl(li){
+  let c=0,p=li.previousElementSibling;
+  while(p){if(p.classList.contains("card"))c++;p=p.previousElementSibling;}
+  tiers[active]=(tiers[active]||[]).filter(k=>k!==c);save();renderList();
+}
+
+const sortable=new Sortable(listEl,{handle:".grip",draggable:".card,.tierbreak",animation:160,ghostClass:"ghost",chosenClass:"chosen",dragClass:"drag",
+  forceFallback:true,fallbackTolerance:4,
+  scroll:true,scrollSensitivity:90,scrollSpeed:16,bubbleScroll:true,
+  onStart:()=>{closeCtx();},
+  onEnd:()=>{syncFromDOM();renderList();}});
+
+listEl.addEventListener("click",e=>{
+  if(suppressNextClick)return;
+  const tx=e.target.closest(".tierx");
+  if(tx){removeBreakEl(tx.closest(".tierbreak"));return;}
+  const btn=e.target.closest(".draftbtn");
+  if(btn){
+    const li=btn.closest(".card");const id=li.dataset.id;
+    if(drafted.has(id)){drafted.delete(id);li.classList.remove("drafted");btn.textContent="Draft";}
+    else{drafted.add(id);li.classList.add("drafted");btn.textContent="Undo";}
+    save();return;
+  }
+  if(e.target.closest(".grip"))return;
+  const li=e.target.closest(".card");
+  if(li)openPlayer(li.dataset.id);
+});
+document.getElementById("reset").addEventListener("click",()=>{
+  const t=TABS.find(t=>t.key===active).label;
+  if(!confirm('Reset the "'+t+'" board back to consensus order? Your custom order for this tab will be cleared.'))return;
+  fillActiveOrder(defaultTabOrder(active));save();renderList();
+});
+const ovl=document.getElementById("ovl");
+const modalEl=document.getElementById("modal");
+function fmtVorp(v){return v==null?"\u2014":(v>0?"+":"")+v;}
+function openPlayer(id){
+  const p=BY_ID[id];if(!p)return;
+  const tiles=[["Proj Pts",p.fps],["VORP",fmtVorp(p.vorp)],["Auction","$"+p.auc]];
+  modalEl.style.setProperty("--pc",POS_COLOR[p.pos]);
+  const has=p.g25!=null;
+  let body;
+  if(has){
+    body='<div class="cmphead"><span class="k"></span><span class="c">2026 Proj</span><span class="c">2025 ('+p.g25+'g)</span></div>'
+      +p.stats.map(s=>'<div class="crow"><span class="k">'+s[0]+'</span><span class="c">'+s[1]+'</span><span class="c">'+(s[2]===""?"\u2014":s[2])+'</span></div>').join("");
+  }else{
+    body=p.stats.map(s=>'<div class="srow"><span class="k">'+s[0]+'</span><span class="v">'+s[1]+'</span></div>').join("")
+      +'<div class="note">No 2025 NFL stats (rookie or did not play)</div>';
+  }
+  modalEl.innerHTML=
+    '<div class="mhead"><button class="mclose" aria-label="Close">\u00d7</button>'
+    +'<div class="mname">'+p.name+'</div>'
+    +'<div class="msub">'+p.pos+p.posrk+' &middot; '+p.team+' &middot; Bye '+p.bye+' &middot; Overall '+p.ovr+'</div></div>'
+    +'<div class="tiles">'+tiles.map(t=>'<div class="tile"><div class="v">'+t[1]+'</div><div class="k">'+t[0]+'</div></div>').join("")+'</div>'
+    +'<div class="mproj"><h4>'+(has?'2026 Projected vs 2025 Actual':'2026 Projected Stats')+'</h4>'+body
+    +'</div>';
+  ovl.classList.add("show");
+}
+function closeModal(){ovl.classList.remove("show");}
+ovl.addEventListener("click",e=>{if(e.target===ovl||e.target.closest(".mclose"))closeModal();});
+
+const searchEl=document.getElementById("search");
+const scountEl=document.getElementById("scount");
+const teamEl=document.getElementById("team");
+let query="";
+let teamFilter="";
+function populateTeams(){
+  const teams=[...new Set(PLAYERS.map(p=>p.team).filter(t=>t&&t.trim()))].sort();
+  teamEl.innerHTML='<option value="">All teams</option>'+teams.map(t=>'<option value="'+t+'">'+t+'</option>').join("");
+}
+function applyFilter(){
+  const q=query.trim().toLowerCase();
+  const t=teamFilter;
+  const filtering=!!q||!!t;
+  const row=searchEl.closest(".searchrow");
+  let shown=0;
+  [...listEl.children].forEach(li=>{
+    if(!li.classList.contains("card")){li.classList.toggle("hidden",filtering);return;}
+    const p=BY_ID[li.dataset.id];
+    const hitQ=!q||p.name.toLowerCase().includes(q)||p.team.toLowerCase().includes(q)||p.pos.toLowerCase()===q;
+    const hitT=!t||p.team===t;
+    const hit=hitQ&&hitT;
+    li.classList.toggle("hidden",!hit);
+    if(hit)shown++;
+  });
+  teamEl.classList.toggle("on",!!t);
+  if(filtering){sortable.option("disabled",true);row.classList.add("active");scountEl.textContent=shown+" shown · clear to reorder";}
+  else{sortable.option("disabled",false);row.classList.remove("active");scountEl.textContent="";}
+}
+searchEl.addEventListener("input",()=>{query=searchEl.value;applyFilter();});
+teamEl.addEventListener("change",()=>{teamFilter=teamEl.value;applyFilter();});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&ctx.classList.contains("show")){closeCtx();return;}
+  if(e.key==="Escape"&&ovl.classList.contains("show")){closeModal();return;}
+  if(e.key==="/"&&document.activeElement!==searchEl){e.preventDefault();searchEl.focus();}
+  if(e.key==="Escape"&&document.activeElement===searchEl){searchEl.value="";query="";applyFilter();searchEl.blur();}
+});
+
+const ctx=document.getElementById("ctx");
+let ctxTarget=null;
+function closeCtx(){if(ctx)ctx.classList.remove("show");ctxTarget=null;}
+function openCtx(x,y){
+  const hasAny=(tiers[active]||[]).length>0;
+  let h="";
+  if(ctxTarget.type==="card")h+='<button data-act="add">Add tier break above</button>';
+  else h+='<button data-act="removeOne">Remove tier break</button>';
+  if(hasAny)h+='<button data-act="clear" class="danger">Clear all tier breaks</button>';
+  ctx.innerHTML=h;ctx.classList.add("show");
+  const w=ctx.offsetWidth||190,hh=ctx.offsetHeight||96;
+  ctx.style.left=Math.max(8,Math.min(x,window.innerWidth-w-8))+"px";
+  ctx.style.top=Math.max(8,Math.min(y,window.innerHeight-hh-8))+"px";
+}
+function ctxFromEvent(e){
+  const brk=e.target.closest(".tierbreak"),card=e.target.closest(".card");
+  if(brk)return{type:"break",el:brk};
+  if(card)return{type:"card",id:card.dataset.id};
+  return null;
+}
+listEl.addEventListener("contextmenu",e=>{
+  if(!isPosTab(active))return;
+  const t=ctxFromEvent(e);if(!t)return;
+  e.preventDefault();ctxTarget=t;openCtx(e.clientX,e.clientY);
+});
+ctx.addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b||!ctxTarget)return;
+  const act=b.dataset.act;
+  if(act==="add")addBreakAbove(ctxTarget.id);
+  else if(act==="removeOne")removeBreakEl(ctxTarget.el);
+  else if(act==="clear"){tiers[active]=[];save();renderList();}
+  closeCtx();
+});
+document.addEventListener("click",e=>{
+  if(suppressNextClick){suppressNextClick=false;return;}
+  if(!ctx.contains(e.target))closeCtx();
+});
+window.addEventListener("scroll",()=>{if(ctx.classList.contains("show"))closeCtx();},{passive:true});
+let lpTimer=null,lpMoved=false;
+listEl.addEventListener("touchstart",e=>{
+  if(!isPosTab(active))return;
+  if(e.target.closest(".grip")||e.target.closest(".draftbtn")||e.target.closest(".tierx"))return;
+  const t=ctxFromEvent(e);if(!t)return;
+  lpMoved=false;const tc=e.touches[0],x=tc.clientX,y=tc.clientY;
+  clearTimeout(lpTimer);
+  lpTimer=setTimeout(()=>{if(!lpMoved){suppressNextClick=true;ctxTarget=t;openCtx(x,y);if(navigator.vibrate)navigator.vibrate(10);}},480);
+},{passive:true});
+listEl.addEventListener("touchmove",()=>{lpMoved=true;clearTimeout(lpTimer);},{passive:true});
+listEl.addEventListener("touchend",()=>clearTimeout(lpTimer),{passive:true});
+
+(async function(){await load();populateTeams();renderTabs();renderList();})();
+</script>
