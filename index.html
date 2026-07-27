@@ -122,6 +122,27 @@
   .crow .c{text-align:right;font-size:14px;font-weight:700;color:var(--chalk);font-variant-numeric:tabular-nums}
   .crow .c:last-child{color:var(--ink-dim);font-weight:600}
   .note{margin-top:12px;font-size:12px;color:var(--ink-faint);font-style:italic}
+  .baracts{display:flex;gap:8px;align-items:center}
+  .reset.danger{color:#E8735F;border-color:#4a2c28}
+  .reset.danger:hover{color:#ff8b76;border-color:#6b3a34}
+  .reset.on{color:var(--ink);border-color:#3a4756}
+  .sdot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:1px}
+  .sync{padding:16px 18px 18px}
+  .snote{margin:0 0 14px;font-size:13px;line-height:1.55;color:var(--ink-dim)}
+  .snote b{color:var(--ink)}
+  .codebox{display:flex;gap:8px;align-items:center}
+  .codebox code{flex:1;min-width:0;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:12px;font-size:17px;font-weight:700;letter-spacing:.1em;color:var(--chalk);text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .codebox input{flex:1;min-width:0;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:12px;font:inherit;font-size:15px;letter-spacing:.06em;color:var(--ink);outline:none;text-align:center}
+  .codebox input:focus{border-color:#48586a}
+  .codebox input::placeholder{color:var(--ink-faint);letter-spacing:.04em}
+  .syncbtns{display:flex;gap:8px;margin-top:12px}
+  .syncbtns .reset{flex:1}
+  .sep{margin:16px 0 12px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;text-align:center;position:relative}
+  .sep::before,.sep::after{content:"";position:absolute;top:50%;width:calc(50% - 22px);height:1px;background:var(--line)}
+  .sep::before{left:0}.sep::after{right:0}
+  .smsg{margin:12px 0 0;font-size:12.5px;line-height:1.5;min-height:1px}
+  .smsg.bad{color:#E8735F}
+  .smsg.good{color:var(--rb)}
 </style>
 
 <header>
@@ -150,7 +171,10 @@
       <span class="lg"><span class="dot" style="background:var(--wr)"></span>WR</span>
       <span class="lg"><span class="dot" style="background:var(--te)"></span>TE</span>
     </div>
-    <button class="reset" id="reset">Reset this board</button>
+    <div class="baracts">
+      <button class="reset" id="syncbtn" title="Use this board on another device">Sync</button>
+      <button class="reset" id="reset">Reset this board</button>
+    </div>
   </div>
   <ul id="list"></ul>
   <p class="hint"><b>Drag the grip</b> to reorder. <b>Tap a player</b> to see his 2026 projections next to his 2025 actual stats, plus VORP. <b>Search</b> to find a player fast (press / to jump to it, Esc to clear). Tap <b>Draft</b> to cross a player off. On the position tabs, <b>right-click</b> (or long-press) a player to add a tier break; drag a break by its grip to move it, or hit its × to remove it. All tabs share one ranking, so moving a player in any tab updates his spot everywhere, and changes save automatically. Starting order: position tabs use the consensus positional ranks; Overall and Flex use auction value, with positional rank breaking ties.</p>
@@ -446,8 +470,81 @@ async function load(){
 }
 let saveTimer=null;
 function save(){
-  store.drafted=[...drafted];store.tiers=tiers;clearTimeout(saveTimer);
+  store.drafted=[...drafted];store.tiers=tiers;store.updatedAt=Date.now();
+  clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{storeSet(KEY,JSON.stringify(store));},120);
+  pushRemote();
+}
+
+/* ---------- Cross-device sync ----------------------------------------
+   One shared code, no accounts: whoever holds the code has the board.
+   Fill these in from Supabase -> Project Settings -> API, after running
+   supabase-setup.sql. Both values are safe to commit -- the anon key only
+   grants EXECUTE on board_get/board_put, and each needs the code. Leave
+   them empty and the board just stays local to this device.            */
+const SUPABASE_URL="";
+const SUPABASE_ANON_KEY="";
+
+const CODE_KEY="ff2026:synccode";
+const CODE_RE=/^[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}$/;
+const syncReady=()=>!!(SUPABASE_URL&&SUPABASE_ANON_KEY);
+function getCode(){try{return localStorage.getItem(CODE_KEY)||"";}catch(e){return "";}}
+function setCode(c){try{c?localStorage.setItem(CODE_KEY,c):localStorage.removeItem(CODE_KEY);}catch(e){}}
+function makeCode(){
+  const A="23456789abcdefghjkmnpqrstuvwxyz"; // no 0/1/i/l/o -- reads cleanly aloud
+  const b=new Uint8Array(12);crypto.getRandomValues(b);
+  const s=[...b].map(x=>A[x%A.length]).join("");
+  return s.slice(0,4)+"-"+s.slice(4,8)+"-"+s.slice(8,12);
+}
+async function rpc(fn,body){
+  const r=await fetch(SUPABASE_URL.replace(/\/+$/,"")+"/rest/v1/rpc/"+fn,{
+    method:"POST",
+    headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY,"Content-Type":"application/json"},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok)throw new Error(fn+" -> HTTP "+r.status);
+  const t=await r.text();
+  return t?JSON.parse(t):null;
+}
+let syncState="idle",pushTimer=null;
+function setSyncState(s){syncState=s;paintSyncBtn();}
+function adopt(remote){
+  store=remote;
+  store.master=reconcileMaster(store.master);
+  drafted=new Set(store.drafted||[]);
+  tiers=(store.tiers&&!Array.isArray(store.tiers))?store.tiers:{};
+}
+// Last write wins, compared on the updatedAt stamped into the blob by save().
+async function pullRemote(){
+  const code=getCode();
+  if(!syncReady()||!code)return false;
+  setSyncState("busy");
+  try{
+    const remote=await rpc("board_get",{p_code:code});
+    setSyncState("idle");
+    if(!remote||(remote.updatedAt||0)<=(store.updatedAt||0))return false;
+    adopt(remote);
+    await storeSet(KEY,JSON.stringify(store));
+    return true;
+  }catch(e){setSyncState("error");return false;}
+}
+function pushRemote(){
+  const code=getCode();
+  if(!syncReady()||!code)return;
+  clearTimeout(pushTimer);
+  pushTimer=setTimeout(async()=>{
+    setSyncState("busy");
+    try{await rpc("board_put",{p_code:code,p_data:store});setSyncState("idle");}
+    catch(e){setSyncState("error");}
+  },600);
+}
+function renderAll(){renderTabs();renderList();applyFilter();}
+function paintSyncBtn(){
+  const b=document.getElementById("syncbtn");if(!b)return;
+  const on=syncReady()&&!!getCode();
+  const c=syncState==="error"?"var(--qb)":syncState==="busy"?"var(--ink-faint)":"var(--rb)";
+  b.innerHTML=on?'<span class="sdot" style="background:'+c+'"></span>Synced':"Sync";
+  b.classList.toggle("on",on);
 }
 
 const listEl=document.getElementById("list");
@@ -573,6 +670,75 @@ function openPlayer(id){
 function closeModal(){ovl.classList.remove("show");}
 ovl.addEventListener("click",e=>{if(e.target===ovl||e.target.closest(".mclose"))closeModal();});
 
+function msg(t,cls){const m=document.getElementById("smsg");if(m){m.textContent=t;m.className="smsg"+(cls?" "+cls:"");}}
+function openSync(){
+  const code=getCode();
+  let h='<div class="mhead"><button class="mclose" aria-label="Close">×</button>'
+   +'<div class="mname">Sync across devices</div>'
+   +'<div class="msub">'+(!syncReady()?"Not set up":code?"Connected":"One code, one board")+'</div></div><div class="sync">';
+  if(!syncReady()){
+    h+='<p class="snote">Not set up yet. Run <b>supabase-setup.sql</b> in your Supabase project, then paste the project URL and anon key into <b>SUPABASE_URL</b> and <b>SUPABASE_ANON_KEY</b> near the top of this page’s script. Until then the board saves on this device only.</p>';
+  }else if(code){
+    h+='<p class="snote">Enter this code on another device to open the same board. Anyone who has the code can see and change your rankings.</p>'
+     +'<div class="codebox"><code>'+code+'</code></div>'
+     +'<div class="syncbtns"><button class="reset" data-a="copy">Copy code</button><button class="reset" data-a="pull">Refresh now</button></div>'
+     +'<div class="syncbtns"><button class="reset danger" data-a="unlink">Disconnect this device</button></div>';
+  }else{
+    h+='<p class="snote">Create a code on the device holding the rankings you want to keep, then enter that code on your other devices.</p>'
+     +'<div class="syncbtns"><button class="reset" data-a="make">Create a code</button></div>'
+     +'<div class="sep">or</div>'
+     +'<div class="codebox"><input id="joinin" placeholder="xxxx-xxxx-xxxx" autocomplete="off" spellcheck="false" maxlength="14"><button class="reset" data-a="join">Connect</button></div>';
+  }
+  modalEl.style.removeProperty("--pc");   // drop the last player modal's position stripe
+  modalEl.innerHTML=h+'<p class="smsg" id="smsg"></p></div>';
+  ovl.classList.add("show");
+}
+const NOREACH="Couldn’t reach Supabase. Check the URL and key, and that the SQL ran.";
+modalEl.addEventListener("click",async e=>{
+  const b=e.target.closest("[data-a]");if(!b)return;
+  const a=b.dataset.a;
+  if(a==="copy"){
+    try{await navigator.clipboard.writeText(getCode());msg("Copied.","good");}
+    catch(err){msg("Couldn’t copy — select the code and copy it by hand.","bad");}
+  }else if(a==="make"){
+    const c=makeCode();store.updatedAt=Date.now();setSyncState("busy");
+    try{
+      await rpc("board_put",{p_code:c,p_data:store});
+      setCode(c);setSyncState("idle");paintSyncBtn();openSync();
+      msg("Code created. This device’s board is now the shared one.","good");
+    }catch(err){setSyncState("error");paintSyncBtn();msg(NOREACH,"bad");}
+  }else if(a==="join"){
+    const v=((document.getElementById("joinin")||{}).value||"").trim().toLowerCase();
+    if(!CODE_RE.test(v)){msg("That doesn’t look like a code — the format is xxxx-xxxx-xxxx.","bad");return;}
+    setSyncState("busy");
+    try{
+      const remote=await rpc("board_get",{p_code:v});
+      setCode(v);setSyncState("idle");
+      if(remote){
+        adopt(remote);await storeSet(KEY,JSON.stringify(store));renderAll();
+        paintSyncBtn();openSync();msg("Connected — board loaded from that code.","good");
+      }else{
+        store.updatedAt=Date.now();await rpc("board_put",{p_code:v,p_data:store});
+        paintSyncBtn();openSync();
+        msg("Connected. Nothing was saved under that code, so this device’s board was uploaded to it.","good");
+      }
+    }catch(err){setSyncState("error");paintSyncBtn();msg(NOREACH,"bad");}
+  }else if(a==="pull"){
+    const got=await pullRemote();
+    paintSyncBtn();
+    if(got){renderAll();msg("Updated from the other device.","good");}
+    else if(syncState==="error")msg(NOREACH,"bad");
+    else msg("Already up to date.","");
+  }else if(a==="unlink"){
+    setCode("");setSyncState("idle");paintSyncBtn();openSync();
+    msg("This device is local-only now. The shared board keeps its code.","");
+  }
+});
+document.getElementById("syncbtn").addEventListener("click",openSync);
+document.addEventListener("visibilitychange",async()=>{
+  if(document.visibilityState==="visible"&&await pullRemote())renderAll();
+});
+
 const searchEl=document.getElementById("search");
 const scountEl=document.getElementById("scount");
 const teamEl=document.getElementById("team");
@@ -660,5 +826,8 @@ listEl.addEventListener("touchstart",e=>{
 listEl.addEventListener("touchmove",()=>{lpMoved=true;clearTimeout(lpTimer);},{passive:true});
 listEl.addEventListener("touchend",()=>clearTimeout(lpTimer),{passive:true});
 
-(async function(){await load();populateTeams();renderTabs();renderList();})();
+(async function(){
+  await load();populateTeams();renderTabs();renderList();paintSyncBtn();
+  if(await pullRemote())renderAll();   // paint from local first, then correct from remote
+})();
 </script>
