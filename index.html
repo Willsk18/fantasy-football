@@ -6,7 +6,7 @@
   :root{
     --bg:#0F141C; --panel:#161D28; --panel-2:#1C2632; --line:#27323F;
     --ink:#EDF1F5; --ink-dim:#8C9AAB; --ink-faint:#5C6B7C; --chalk:#F4F6F8;
-    --qb:#F2B53B; --rb:#46D88A; --wr:#46B6F2; --te:#C58CFF; --k:#8FA3B8; --dst:#E0885F;
+    --qb:#F2B53B; --rb:#46D88A; --wr:#46B6F2; --te:#C58CFF;
     --shadow:0 18px 40px rgba(0,0,0,.45); --r:12px;
   }
   *{box-sizing:border-box}
@@ -149,35 +149,6 @@
   .tiles .tdelta{font-size:12px;font-weight:800;border-radius:4px;padding:1px 4px;margin-left:2px;vertical-align:2px;color:var(--ink-faint)}
   .tiles .tdelta.up{color:#0F141C;background:var(--rb)}
   .tiles .tdelta.down{color:#0F141C;background:var(--qb)}
-  .dbar{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:9px 12px;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.04em}
-  .dbar:hover{border-color:#3a4756}
-  .dbar .dnow{color:var(--ink-dim);white-space:nowrap}
-  .dbar .dyou{flex:1;min-width:0;color:var(--chalk);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .dbar .dgear{color:var(--ink-faint);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
-  .dbar.clock{border-color:var(--rb);background:#16281f}
-  .dbar.clock .dyou{color:var(--rb);text-transform:uppercase;letter-spacing:.1em}
-  .avail{display:none;font-size:9.5px;font-weight:800;letter-spacing:.07em;border-radius:4px;padding:1px 4px;margin-left:3px;vertical-align:1px}
-  #list.draftmode .avail{display:inline-block}
-  #list.draftmode .vchip{display:none}
-  .avail.wait{color:#0F141C;background:var(--rb)}
-  .avail.risky{color:#0F141C;background:var(--qb)}
-  .avail.gone{color:var(--ink-faint);background:#2b3542}
-  .snote .avail{display:inline-block}
-  .drow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line)}
-  .drow label{font-size:13px;color:var(--ink-dim);font-weight:600}
-  .drow select,.drow input[type=number]{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:inherit;font-size:14px;padding:7px 9px;min-width:84px;text-align:center;outline:none}
-  .drow select:focus,.drow input:focus{border-color:#48586a}
-  .drow input[type=checkbox]{width:18px;height:18px;accent-color:var(--rb);cursor:pointer}
-  .odds{padding:14px 18px 0}
-  .odds h4{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);font-weight:700}
-  .orow{display:flex;align-items:center;gap:10px;padding:5px 0}
-  .orow .ok{flex:0 0 78px;font-size:12.5px;color:var(--ink-dim);font-weight:600;white-space:nowrap}
-  .orow .obar{flex:1;min-width:0;height:7px;border-radius:4px;background:var(--panel-2);overflow:hidden}
-  .orow .obar i{display:block;height:100%;background:var(--pc,#3a4756);border-radius:4px}
-  .orow .avail{flex:0 0 42px;text-align:center;margin-left:0}
-  .odds .note{margin-top:9px;padding:0}
-  .dact{padding:14px 18px 0}
-  .dact .reset{width:100%;padding:11px}
   .prompt{background:var(--panel-2);border:1px solid #3a4756;border-radius:10px;padding:14px 14px 12px;margin-bottom:16px}
   .prompt .pq{font-size:14.5px;font-weight:800;color:var(--chalk);margin-bottom:5px}
   .prompt .snote{margin:0 0 12px;font-size:12.5px}
@@ -220,7 +191,6 @@
       <span class="scount" id="scount"></span>
       <select id="team" class="teamsel" title="Filter by team"><option value="">All teams</option></select>
     </div>
-    <div class="dbar" id="dbar" hidden></div>
   </div>
 </header>
 
@@ -233,7 +203,6 @@
       <span class="lg"><span class="dot" style="background:var(--te)"></span>TE</span>
     </div>
     <div class="baracts">
-      <button class="reset" id="draftbtnmode" title="Draft mode">Draft mode</button>
       <button class="reset" id="adpbtn" title="Average draft position">ADP</button>
       <button class="reset" id="syncbtn" title="Use this board on another device">Sync</button>
       <button class="reset" id="reset">Reset this board</button>
@@ -247,7 +216,7 @@
 <div class="ctx" id="ctx"></div>
 
 <script>
-const POS_COLOR = {QB:"var(--qb)",RB:"var(--rb)",WR:"var(--wr)",TE:"var(--te)",K:"var(--k)",DST:"var(--dst)"};
+const POS_COLOR = {QB:"var(--qb)",RB:"var(--rb)",WR:"var(--wr)",TE:"var(--te)"};
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
 
 /* Source: "Jake's Ranks" + "OVR & VORP Ranks" tabs (2026 proj, VORP). 2025 actuals
@@ -475,75 +444,12 @@ const PLAYERS = [
 {name:"Troy Franklin",team:"DEN",pos:"WR",bye:10,posrk:88,ovr:220,fps:66.4,auc:0,vorp:-22.7,g25:17,stats:[["Targets","49","104"],["Rec","30","65"],["Rec Yds","349","709"],["Rec TD","2.7","6"]]},
 {name:"Chris Brazzell",team:"CAR",pos:"WR",bye:5,posrk:89,ovr:221,fps:60.7,auc:0,vorp:-28.4,g25:null,stats:[["Targets","48",""],["Rec","26",""],["Rec Yds","328",""],["Rec TD","2.5",""]]},
 {name:"Tre' Harris",team:"LAC",pos:"WR",bye:7,posrk:90,ovr:222,fps:61.1,auc:0,vorp:-28.0,g25:17,stats:[["Targets","49","43"],["Rec","30","30"],["Rec Yds","358","324"],["Rec TD","1.7","1"]]}
-/* Kickers and defences. No projections -- they are here so every pick in
-   the draft can be crossed off, which is what keeps pickNow() honest.
-   ESPN ADP, with the 37 it crams past 165 spread across the last-rounds
-   window instead. */
-{name:"Brandon Aubrey",team:"DAL",pos:"K",bye:14,posrk:1,ovr:223,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Broncos",team:"DEN",pos:"DST",bye:10,posrk:1,ovr:224,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Texans",team:"HOU",pos:"DST",bye:8,posrk:2,ovr:225,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Rams",team:"LAR",pos:"DST",bye:11,posrk:3,ovr:226,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Seahawks",team:"SEA",pos:"DST",bye:11,posrk:4,ovr:227,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Cameron Dicker",team:"LAC",pos:"K",bye:7,posrk:2,ovr:228,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Steelers",team:"PIT",pos:"DST",bye:9,posrk:5,ovr:229,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Ravens",team:"BAL",pos:"DST",bye:13,posrk:6,ovr:230,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Ka'imi Fairbairn",team:"HOU",pos:"K",bye:8,posrk:3,ovr:231,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Eagles",team:"PHI",pos:"DST",bye:10,posrk:7,ovr:232,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Cam Little",team:"JAX",pos:"K",bye:7,posrk:4,ovr:233,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Patriots",team:"NE",pos:"DST",bye:11,posrk:8,ovr:234,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Eddy Pineiro",team:"SF",pos:"K",bye:8,posrk:5,ovr:235,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Harrison Butker",team:"KC",pos:"K",bye:5,posrk:6,ovr:236,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Lions",team:"DET",pos:"DST",bye:6,posrk:9,ovr:237,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Browns",team:"CLE",pos:"DST",bye:11,posrk:10,ovr:238,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Chiefs",team:"KC",pos:"DST",bye:5,posrk:11,ovr:239,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Chargers",team:"LAC",pos:"DST",bye:7,posrk:12,ovr:240,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Tyler Loop",team:"BAL",pos:"K",bye:13,posrk:7,ovr:241,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Chris Boswell",team:"PIT",pos:"K",bye:9,posrk:8,ovr:242,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Jaguars",team:"JAX",pos:"DST",bye:7,posrk:13,ovr:243,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Will Reichard",team:"MIN",pos:"K",bye:6,posrk:9,ovr:244,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Cairo Santos",team:"CHI",pos:"K",bye:10,posrk:10,ovr:245,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Cowboys",team:"DAL",pos:"DST",bye:14,posrk:14,ovr:246,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Packers",team:"GB",pos:"DST",bye:11,posrk:15,ovr:247,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Vikings",team:"MIN",pos:"DST",bye:6,posrk:16,ovr:248,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"49ers",team:"SF",pos:"DST",bye:8,posrk:17,ovr:249,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Buccaneers",team:"TB",pos:"DST",bye:10,posrk:18,ovr:250,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Evan McPherson",team:"CIN",pos:"K",bye:6,posrk:11,ovr:251,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Jake Elliott",team:"PHI",pos:"K",bye:10,posrk:12,ovr:252,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Bills",team:"BUF",pos:"DST",bye:7,posrk:19,ovr:253,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Giants",team:"NYG",pos:"DST",bye:8,posrk:20,ovr:254,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Bears",team:"CHI",pos:"DST",bye:10,posrk:21,ovr:255,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Matt Gay",team:"WSH",pos:"K",bye:7,posrk:13,ovr:256,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Dolphins",team:"MIA",pos:"DST",bye:6,posrk:22,ovr:257,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Bengals",team:"CIN",pos:"DST",bye:6,posrk:23,ovr:258,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Raiders",team:"LV",pos:"DST",bye:13,posrk:24,ovr:259,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Panthers",team:"CAR",pos:"DST",bye:5,posrk:25,ovr:260,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Commanders",team:"WSH",pos:"DST",bye:7,posrk:26,ovr:261,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Tyler Bass",team:"BUF",pos:"K",bye:7,posrk:14,ovr:262,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Jason Sanders",team:"MIA",pos:"K",bye:6,posrk:15,ovr:263,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Ryan Fitzgerald",team:"CAR",pos:"K",bye:5,posrk:16,ovr:264,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Cardinals",team:"ARI",pos:"DST",bye:14,posrk:27,ovr:265,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Titans",team:"TEN",pos:"DST",bye:9,posrk:28,ovr:266,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Falcons",team:"ATL",pos:"DST",bye:11,posrk:29,ovr:267,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Andre Szmyt",team:"CLE",pos:"K",bye:11,posrk:17,ovr:268,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Jake Moody",team:"CHI",pos:"K",bye:10,posrk:18,ovr:269,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Ben Sauls",team:"NYG",pos:"K",bye:8,posrk:19,ovr:270,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Chad Ryland",team:"ARI",pos:"K",bye:14,posrk:20,ovr:271,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Nick Folk",team:"NYJ",pos:"K",bye:13,posrk:21,ovr:272,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Jets",team:"NYJ",pos:"DST",bye:13,posrk:30,ovr:273,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Zane Gonzalez",team:"ATL",pos:"K",bye:11,posrk:22,ovr:274,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Joey Slye",team:"TEN",pos:"K",bye:9,posrk:23,ovr:275,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Saints",team:"NO",pos:"DST",bye:8,posrk:31,ovr:276,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Andy Borregales",team:"NE",pos:"K",bye:11,posrk:24,ovr:277,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Wil Lutz",team:"DEN",pos:"K",bye:10,posrk:25,ovr:278,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Blake Grupe",team:"NO",pos:"K",bye:8,posrk:26,ovr:279,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Colts",team:"IND",pos:"DST",bye:13,posrk:32,ovr:280,fps:null,auc:null,vorp:null,g25:null,stats:[]},
-{name:"Travis Hunter",team:"JAX",pos:"WR",bye:7,posrk:44,ovr:103,fps:null,auc:null,vorp:null,g25:null,stats:[]},
 ].map(p=>({...p,id:slug(p.name)+"-"+p.team.toLowerCase()}));
 const BY_ID = Object.fromEntries(PLAYERS.map(p=>[p.id,p]));
 
 /* ESPN athlete ids, resolved once from team rosters + search and verified
    against the athlete endpoint. Used for the 2025 game log fetch. */
-const ESPN_ID={"travis-hunter-jax":4685415,"jaxon-smith-njigba-sea":4430878,"ja-marr-chase-cin":4362628,"puka-nacua-lar":4426515,"amon-ra-st-brown-det":4374302,"bijan-robinson-atl":4430807,"jahmyr-gibbs-det":4429795,"christian-mccaffrey-sf":3117251,"drake-london-atl":4426502,"george-pickens-dal":4426354,"jonathan-taylor-ind":4242335,"ceedee-lamb-dal":4241389,"justin-jefferson-min":4262921,"a-j-brown-ne":4047646,"nico-collins-hou":4258173,"tee-higgins-cin":4239993,"de-von-achane-mia":4429160,"tetairoa-mcmillan-car":4685472,"zay-flowers-bal":4429615,"james-cook-buf":4379399,"josh-allen-buf":3918298,"terry-mclaurin-wsh":3121422,"devonta-smith-phi":4241478,"rashee-rice-kc":4428331,"jaylen-waddle-den":4372016,"ladd-mcconkey-lac":4612826,"luther-burden-chi":4685278,"derrick-henry-bal":3043078,"chase-brown-cin":4362238,"chris-olave-no":4361370,"emeka-egbuka-tb":4567750,"davante-adams-lar":16800,"garrett-wilson-nyj":4569618,"dj-moore-buf":3915416,"ashton-jeanty-lv":4890973,"omarion-hampton-lac":4685382,"mike-evans-sf":16737,"carnell-tate-ten":4871023,"kenneth-walker-kc":4567048,"jameson-williams-det":4426388,"breece-hall-nyj":4427366,"kyren-williams-lar":4430737,"saquon-barkley-phi":3929630,"cam-skattebo-nyg":4696981,"josh-jacobs-gb":4047365,"marvin-harrison-ari":4432708,"makai-lemon-phi":4870795,"javonte-williams-dal":4361579,"rome-odunze-chi":4431299,"travis-etienne-no":4239996,"jeremiyah-love-ari":4870808,"alec-pierce-ind":4360078,"parker-washington-jax":4432620,"courtland-sutton-den":3128429,"christian-watson-gb":4248528,"jordan-addison-min":4429205,"drake-maye-ne":4431452,"jordyn-tyson-no":4880281,"dk-metcalf-pit":4047650,"michael-pittman-pit":4035687,"malik-nabers-nyg":4595348,"lamar-jackson-bal":3916387,"david-montgomery-hou":4035538,"ricky-pearsall-sf":4428209,"treveyon-henderson-ne":4432710,"jakobi-meyers-jax":3916433,"quinshon-judkins-cle":4685702,"kenneth-gainwell-tb":4371733,"rhamondre-stevenson-ne":4569173,"wan-dale-robinson-ten":4569587,"jayden-reed-gb":4362249,"jadarian-price-sea":4685512,"josh-downs-ind":4688813,"quentin-johnston-lac":4429025,"tony-pollard-ten":3916148,"colston-loveland-chi":4723086,"d-andre-swift-chi":4259545,"chris-godwin-tb":3116165,"jayden-higgins-hou":4877706,"brock-bowers-lv":4432665,"xavier-worthy-kc":4683062,"joe-burrow-cin":3915511,"chuba-hubbard-car":4241416,"brian-thomas-jax":4432773,"bhayshul-tuten-jax":4882093,"michael-wilson-ari":4360761,"rico-dowdle-pit":4038815,"rj-harvey-den":4568490,"jaylen-warren-pit":4569987,"trey-mcbride-ari":4361307,"romeo-doubs-ne":4361432,"bucky-irving-tb":4596448,"omar-cooper-nyj":4723820,"jalen-hurts-phi":4040715,"matthew-golden-gb":4701936,"jalen-coker-car":4695883,"khalil-shakir-buf":4373678,"tyler-warren-ind":4431459,"kyle-monangai-chi":4608686,"jayden-daniels-wsh":4426348,"aaron-jones-min":3042519,"rashid-shaheed-sea":4032473,"jalen-nailor-lv":4382466,"sam-laporta-det":4430027,"dak-prescott-dal":2577417,"brock-purdy-sf":4361741,"harold-fannin-cle":5083076,"blake-corum-lar":4429096,"jordan-mason-min":4360569,"caleb-williams-chi":4431611,"tucker-kraft-gb":4572680,"antonio-williams-wsh":5081432,"trevor-lawrence-jax":4360310,"tyquan-thornton-kc":4362921,"calvin-ridley-ten":3925357,"patrick-mahomes-kc":3139477,"jaxson-dart-nyg":4689114,"emanuel-wilson-sea":4887558,"adonai-mitchell-nyj":4597500,"travis-kelce-kc":15847,"andrei-iosivas-cin":4368003,"rachaad-white-wsh":4697815,"jacory-croskey-merritt-wsh":4575131,"kc-concepcion-cle":4870653,"denzel-boston-cle":4832800,"chris-rodriguez-jax":4362619,"caleb-douglas-mia":4869645,"isaiah-likely-nyg":4361050,"j-k-dobbins-den":4241985,"jonathon-brooks-car":4678008,"george-kittle-sf":3040151,"jerry-jeudy-cle":4241463,"kyle-pitts-atl":4360248,"jalen-mcmillan-tb":4430834,"bo-nix-den":4426338,"jared-goff-det":3046779,"germie-bernard-pit":4685261,"tre-tucker-lv":4428718,"matthew-stafford-lar":12483,"jack-bech-lv":4603186,"ryan-flournoy-dal":5083754,"justin-herbert-lac":4038941,"malik-washington-mia":4569603,"jake-ferguson-dal":4242355,"dalton-kincaid-buf":4385690,"mark-andrews-bal":3116365,"brenton-strange-jax":4430539,"kyler-murray-min":3917315,"dallas-goedert-phi":3121023,"t-j-hockenson-min":4036133,"baker-mayfield-tb":3052587,"hunter-henry-ne":3046439,"malik-willis-mia":4242512,"greg-dulcich-mia":4367209,"tyler-shough-no":4360689,"chig-okonkwo-wsh":4360635,"jordan-love-gb":4036378,"dalton-schultz-hou":3117256,"c-j-stroud-hou":4432577,"kenyon-sadiq-nyj":5083315,"cam-ward-ten":4688380,"pat-freiermuth-pit":4361411,"daniel-jones-ind":3917792,"juwan-johnson-no":3929645,"sam-darnold-sea":3912547,"david-njoku-lac":3123076,"bryce-young-car":4685720,"jacoby-brissett-ari":2578570,"aaron-rodgers-pit":8439,"tua-tagovailoa-atl":4241479,"geno-smith-nyj":15864,"shedeur-sanders-cle":4432762,"kirk-cousins-lv":14880,"isiah-pacheco-det":4361529,"alvin-kamara-no":3054850,"tyrone-tracy-nyg":4360516,"dylan-sampson-cle":5081397,"tyler-allgeier-ari":4373626,"woody-marks-hou":4429059,"brian-robinson-atl":4241474,"justice-hill-bal":4038441,"braelon-allen-nyj":4685247,"tyjae-spears-ten":4428557,"tank-bigsby-phi":4429013,"ty-johnson-buf":3915411,"mike-washington-lv":4686658,"jonah-coleman-den":4702555,"kaytron-allen-wsh":4685246,"keaton-mitchell-lac":4596334,"emmett-johnson-kc":4832955,"ollie-gordon-mia":4711533,"jaydon-blue-dal":4685279,"deebo-samuel-":3126486,"samaje-perine-cin":3116389,"stefon-diggs-":2976212,"chris-brooks-gb":3149687,"brandon-aiyuk-":4360438,"kimani-vidal-lac":4430968,"nicholas-singleton-ten":4685555,"ray-davis-buf":4429501,"marshawn-lloyd-gb":4429023,"chris-bell-mia":4869961,"jordan-james-sf":4685397,"kayshon-boutte-ne":4429022,"demond-claiborne-min":4832846,"jaylen-wright-mia":4682745,"sean-tucker-tb":4430871,"trey-benson-ari":4429275,"kaelon-black-sf":4696044,"jauan-jennings-min":3886598,"brashard-smith-kc":4596602,"isaac-teslaa-det":5123663,"rashod-bateman-bal":4360939,"darnell-mooney-nyg":4040655,"zachariah-branch-atl":4870612,"keenan-allen-":15818,"tyreek-hill-":3116406,"cooper-kupp-sea":2977187,"jaylin-noel-hou":4586312,"tank-dell-hou":4366031,"troy-franklin-den":4431280,"chris-brazzell-car":5091739,"tre-harris-lac":4686612};
+const ESPN_ID={"jaxon-smith-njigba-sea":4430878,"ja-marr-chase-cin":4362628,"puka-nacua-lar":4426515,"amon-ra-st-brown-det":4374302,"bijan-robinson-atl":4430807,"jahmyr-gibbs-det":4429795,"christian-mccaffrey-sf":3117251,"drake-london-atl":4426502,"george-pickens-dal":4426354,"jonathan-taylor-ind":4242335,"ceedee-lamb-dal":4241389,"justin-jefferson-min":4262921,"a-j-brown-ne":4047646,"nico-collins-hou":4258173,"tee-higgins-cin":4239993,"de-von-achane-mia":4429160,"tetairoa-mcmillan-car":4685472,"zay-flowers-bal":4429615,"james-cook-buf":4379399,"josh-allen-buf":3918298,"terry-mclaurin-wsh":3121422,"devonta-smith-phi":4241478,"rashee-rice-kc":4428331,"jaylen-waddle-den":4372016,"ladd-mcconkey-lac":4612826,"luther-burden-chi":4685278,"derrick-henry-bal":3043078,"chase-brown-cin":4362238,"chris-olave-no":4361370,"emeka-egbuka-tb":4567750,"davante-adams-lar":16800,"garrett-wilson-nyj":4569618,"dj-moore-buf":3915416,"ashton-jeanty-lv":4890973,"omarion-hampton-lac":4685382,"mike-evans-sf":16737,"carnell-tate-ten":4871023,"kenneth-walker-kc":4567048,"jameson-williams-det":4426388,"breece-hall-nyj":4427366,"kyren-williams-lar":4430737,"saquon-barkley-phi":3929630,"cam-skattebo-nyg":4696981,"josh-jacobs-gb":4047365,"marvin-harrison-ari":4432708,"makai-lemon-phi":4870795,"javonte-williams-dal":4361579,"rome-odunze-chi":4431299,"travis-etienne-no":4239996,"jeremiyah-love-ari":4870808,"alec-pierce-ind":4360078,"parker-washington-jax":4432620,"courtland-sutton-den":3128429,"christian-watson-gb":4248528,"jordan-addison-min":4429205,"drake-maye-ne":4431452,"jordyn-tyson-no":4880281,"dk-metcalf-pit":4047650,"michael-pittman-pit":4035687,"malik-nabers-nyg":4595348,"lamar-jackson-bal":3916387,"david-montgomery-hou":4035538,"ricky-pearsall-sf":4428209,"treveyon-henderson-ne":4432710,"jakobi-meyers-jax":3916433,"quinshon-judkins-cle":4685702,"kenneth-gainwell-tb":4371733,"rhamondre-stevenson-ne":4569173,"wan-dale-robinson-ten":4569587,"jayden-reed-gb":4362249,"jadarian-price-sea":4685512,"josh-downs-ind":4688813,"quentin-johnston-lac":4429025,"tony-pollard-ten":3916148,"colston-loveland-chi":4723086,"d-andre-swift-chi":4259545,"chris-godwin-tb":3116165,"jayden-higgins-hou":4877706,"brock-bowers-lv":4432665,"xavier-worthy-kc":4683062,"joe-burrow-cin":3915511,"chuba-hubbard-car":4241416,"brian-thomas-jax":4432773,"bhayshul-tuten-jax":4882093,"michael-wilson-ari":4360761,"rico-dowdle-pit":4038815,"rj-harvey-den":4568490,"jaylen-warren-pit":4569987,"trey-mcbride-ari":4361307,"romeo-doubs-ne":4361432,"bucky-irving-tb":4596448,"omar-cooper-nyj":4723820,"jalen-hurts-phi":4040715,"matthew-golden-gb":4701936,"jalen-coker-car":4695883,"khalil-shakir-buf":4373678,"tyler-warren-ind":4431459,"kyle-monangai-chi":4608686,"jayden-daniels-wsh":4426348,"aaron-jones-min":3042519,"rashid-shaheed-sea":4032473,"jalen-nailor-lv":4382466,"sam-laporta-det":4430027,"dak-prescott-dal":2577417,"brock-purdy-sf":4361741,"harold-fannin-cle":5083076,"blake-corum-lar":4429096,"jordan-mason-min":4360569,"caleb-williams-chi":4431611,"tucker-kraft-gb":4572680,"antonio-williams-wsh":5081432,"trevor-lawrence-jax":4360310,"tyquan-thornton-kc":4362921,"calvin-ridley-ten":3925357,"patrick-mahomes-kc":3139477,"jaxson-dart-nyg":4689114,"emanuel-wilson-sea":4887558,"adonai-mitchell-nyj":4597500,"travis-kelce-kc":15847,"andrei-iosivas-cin":4368003,"rachaad-white-wsh":4697815,"jacory-croskey-merritt-wsh":4575131,"kc-concepcion-cle":4870653,"denzel-boston-cle":4832800,"chris-rodriguez-jax":4362619,"caleb-douglas-mia":4869645,"isaiah-likely-nyg":4361050,"j-k-dobbins-den":4241985,"jonathon-brooks-car":4678008,"george-kittle-sf":3040151,"jerry-jeudy-cle":4241463,"kyle-pitts-atl":4360248,"jalen-mcmillan-tb":4430834,"bo-nix-den":4426338,"jared-goff-det":3046779,"germie-bernard-pit":4685261,"tre-tucker-lv":4428718,"matthew-stafford-lar":12483,"jack-bech-lv":4603186,"ryan-flournoy-dal":5083754,"justin-herbert-lac":4038941,"malik-washington-mia":4569603,"jake-ferguson-dal":4242355,"dalton-kincaid-buf":4385690,"mark-andrews-bal":3116365,"brenton-strange-jax":4430539,"kyler-murray-min":3917315,"dallas-goedert-phi":3121023,"t-j-hockenson-min":4036133,"baker-mayfield-tb":3052587,"hunter-henry-ne":3046439,"malik-willis-mia":4242512,"greg-dulcich-mia":4367209,"tyler-shough-no":4360689,"chig-okonkwo-wsh":4360635,"jordan-love-gb":4036378,"dalton-schultz-hou":3117256,"c-j-stroud-hou":4432577,"kenyon-sadiq-nyj":5083315,"cam-ward-ten":4688380,"pat-freiermuth-pit":4361411,"daniel-jones-ind":3917792,"juwan-johnson-no":3929645,"sam-darnold-sea":3912547,"david-njoku-lac":3123076,"bryce-young-car":4685720,"jacoby-brissett-ari":2578570,"aaron-rodgers-pit":8439,"tua-tagovailoa-atl":4241479,"geno-smith-nyj":15864,"shedeur-sanders-cle":4432762,"kirk-cousins-lv":14880,"isiah-pacheco-det":4361529,"alvin-kamara-no":3054850,"tyrone-tracy-nyg":4360516,"dylan-sampson-cle":5081397,"tyler-allgeier-ari":4373626,"woody-marks-hou":4429059,"brian-robinson-atl":4241474,"justice-hill-bal":4038441,"braelon-allen-nyj":4685247,"tyjae-spears-ten":4428557,"tank-bigsby-phi":4429013,"ty-johnson-buf":3915411,"mike-washington-lv":4686658,"jonah-coleman-den":4702555,"kaytron-allen-wsh":4685246,"keaton-mitchell-lac":4596334,"emmett-johnson-kc":4832955,"ollie-gordon-mia":4711533,"jaydon-blue-dal":4685279,"deebo-samuel-":3126486,"samaje-perine-cin":3116389,"stefon-diggs-":2976212,"chris-brooks-gb":3149687,"brandon-aiyuk-":4360438,"kimani-vidal-lac":4430968,"nicholas-singleton-ten":4685555,"ray-davis-buf":4429501,"marshawn-lloyd-gb":4429023,"chris-bell-mia":4869961,"jordan-james-sf":4685397,"kayshon-boutte-ne":4429022,"demond-claiborne-min":4832846,"jaylen-wright-mia":4682745,"sean-tucker-tb":4430871,"trey-benson-ari":4429275,"kaelon-black-sf":4696044,"jauan-jennings-min":3886598,"brashard-smith-kc":4596602,"isaac-teslaa-det":5123663,"rashod-bateman-bal":4360939,"darnell-mooney-nyg":4040655,"zachariah-branch-atl":4870612,"keenan-allen-":15818,"tyreek-hill-":3116406,"cooper-kupp-sea":2977187,"jaylin-noel-hou":4586312,"tank-dell-hou":4366031,"troy-franklin-den":4431280,"chris-brazzell-car":5091739,"tre-harris-lac":4686612};
 
 /* 2026 regular season, baked from ESPN so the schedule works offline.
    18 slots per team, semicolon-separated: ""=bye, "OPP:MM-DD"=home,
@@ -556,27 +462,9 @@ const SCHED={ari:"@LAC:09-13;SEA:09-20;@SF:09-27;@NYG:10-04;DET:10-11;@LAR:10-18
    result under ff2026:adp. Two of the 222 (Keenan Allen, Brashard Smith)
    fall outside ESPN's top 400 and have no ADP at all. */
 const ADP_ASOF="2026-07-27";
-const ADP={"travis-hunter-jax":118.53,"jaxon-smith-njigba-sea":5.85,"ja-marr-chase-cin":4.58,"puka-nacua-lar":3.66,"amon-ra-st-brown-det":8.17,"bijan-robinson-atl":2.65,"jahmyr-gibbs-det":1.62,"christian-mccaffrey-sf":6.14,"drake-london-atl":19.57,"george-pickens-dal":27.9,"jonathan-taylor-ind":8.11,"ceedee-lamb-dal":10.49,"justin-jefferson-min":11.88,"a-j-brown-ne":26.15,"nico-collins-hou":27.55,"tee-higgins-cin":55.47,"de-von-achane-mia":12.92,"tetairoa-mcmillan-car":40.05,"zay-flowers-bal":42.54,"james-cook-buf":14.27,"josh-allen-buf":22.77,"terry-mclaurin-wsh":59.86,"devonta-smith-phi":37.78,"rashee-rice-kc":22.51,"jaylen-waddle-den":59.3,"ladd-mcconkey-lac":55.38,"luther-burden-chi":76.09,"derrick-henry-bal":20.31,"chase-brown-cin":26.49,"chris-olave-no":35.59,"emeka-egbuka-tb":39.83,"davante-adams-lar":46.01,"garrett-wilson-nyj":34.58,"dj-moore-buf":69.88,"ashton-jeanty-lv":17.56,"omarion-hampton-lac":20.47,"mike-evans-sf":88.02,"carnell-tate-ten":67.43,"kenneth-walker-kc":28.62,"jameson-williams-det":66.44,"breece-hall-nyj":32.45,"kyren-williams-lar":39.91,"saquon-barkley-phi":16.98,"cam-skattebo-nyg":43.73,"josh-jacobs-gb":25.97,"marvin-harrison-ari":83.92,"makai-lemon-phi":106.87,"javonte-williams-dal":37.2,"rome-odunze-chi":71.08,"travis-etienne-no":47.06,"jeremiyah-love-ari":17.28,"alec-pierce-ind":92.68,"parker-washington-jax":100.74,"courtland-sutton-den":85.38,"christian-watson-gb":96.97,"jordan-addison-min":120.9,"drake-maye-ne":47.65,"jordyn-tyson-no":96.8,"dk-metcalf-pit":86.01,"michael-pittman-pit":89.57,"malik-nabers-nyg":45.64,"lamar-jackson-bal":40.29,"david-montgomery-hou":72.55,"ricky-pearsall-sf":119.44,"treveyon-henderson-ne":66.21,"jakobi-meyers-jax":108.99,"quinshon-judkins-cle":52.64,"kenneth-gainwell-tb":121.3,"rhamondre-stevenson-ne":109.02,"wan-dale-robinson-ten":112.39,"jayden-reed-gb":136.96,"jadarian-price-sea":74.37,"josh-downs-ind":136.44,"quentin-johnston-lac":143.72,"tony-pollard-ten":86.42,"colston-loveland-chi":45.49,"d-andre-swift-chi":70.82,"chris-godwin-tb":139.41,"jayden-higgins-hou":158.62,"brock-bowers-lv":23.21,"xavier-worthy-kc":139.53,"joe-burrow-cin":59.61,"chuba-hubbard-car":106.16,"brian-thomas-jax":100.48,"bhayshul-tuten-jax":75.83,"michael-wilson-ari":113.32,"rico-dowdle-pit":105.86,"rj-harvey-den":122.48,"jaylen-warren-pit":100.27,"trey-mcbride-ari":18.38,"romeo-doubs-ne":146.11,"bucky-irving-tb":55.78,"omar-cooper-nyj":168.61,"jalen-hurts-phi":53.75,"matthew-golden-gb":104.14,"jalen-coker-car":161.66,"khalil-shakir-buf":133.29,"tyler-warren-ind":46.79,"kyle-monangai-chi":122.57,"jayden-daniels-wsh":51.7,"aaron-jones-min":117.6,"rashid-shaheed-sea":157.1,"jalen-nailor-lv":169.62,"sam-laporta-det":69.21,"dak-prescott-dal":91.07,"brock-purdy-sf":101.61,"harold-fannin-cle":77.34,"blake-corum-lar":135.85,"jordan-mason-min":146.69,"caleb-williams-chi":90.82,"tucker-kraft-gb":108.33,"antonio-williams-wsh":169.68,"trevor-lawrence-jax":93.76,"tyquan-thornton-kc":169.97,"calvin-ridley-ten":167.55,"patrick-mahomes-kc":102.6,"jaxson-dart-nyg":73.05,"emanuel-wilson-sea":170.7,"adonai-mitchell-nyj":169.9,"travis-kelce-kc":99.82,"andrei-iosivas-cin":170.15,"rachaad-white-wsh":121.69,"jacory-croskey-merritt-wsh":139.71,"kc-concepcion-cle":143.38,"denzel-boston-cle":167.53,"chris-rodriguez-jax":168.57,"caleb-douglas-mia":170.22,"isaiah-likely-nyg":127.01,"j-k-dobbins-den":119.15,"jonathon-brooks-car":131.4,"george-kittle-sf":85.21,"jerry-jeudy-cle":162.72,"kyle-pitts-atl":65.56,"jalen-mcmillan-tb":166.8,"bo-nix-den":98.28,"jared-goff-det":141.04,"germie-bernard-pit":169.47,"tre-tucker-lv":168.3,"matthew-stafford-lar":79.83,"jack-bech-lv":170.86,"ryan-flournoy-dal":170.31,"justin-herbert-lac":107.84,"malik-washington-mia":170.14,"jake-ferguson-dal":108.13,"dalton-kincaid-buf":136.19,"mark-andrews-bal":120.47,"brenton-strange-jax":166.29,"kyler-murray-min":148.62,"dallas-goedert-phi":100.27,"t-j-hockenson-min":132.18,"baker-mayfield-tb":149.49,"hunter-henry-ne":142.27,"malik-willis-mia":166.54,"greg-dulcich-mia":170.2,"tyler-shough-no":153.13,"chig-okonkwo-wsh":168.51,"jordan-love-gb":159.86,"dalton-schultz-hou":167.97,"c-j-stroud-hou":166.42,"kenyon-sadiq-nyj":134.7,"cam-ward-ten":167.05,"pat-freiermuth-pit":168.72,"daniel-jones-ind":162.81,"juwan-johnson-no":163.64,"sam-darnold-sea":164.04,"david-njoku-lac":170.07,"bryce-young-car":168.36,"jacoby-brissett-ari":170.14,"aaron-rodgers-pit":169.46,"tua-tagovailoa-atl":170.67,"geno-smith-nyj":170.23,"shedeur-sanders-cle":169.45,"kirk-cousins-lv":169.99,"isiah-pacheco-det":157.44,"alvin-kamara-no":155.95,"tyrone-tracy-nyg":167.47,"dylan-sampson-cle":170.51,"tyler-allgeier-ari":169.76,"woody-marks-hou":149,"brian-robinson-atl":168.98,"justice-hill-bal":170.36,"braelon-allen-nyj":169.24,"tyjae-spears-ten":167.09,"tank-bigsby-phi":168.44,"ty-johnson-buf":170.35,"mike-washington-lv":170.19,"jonah-coleman-den":170.01,"kaytron-allen-wsh":170.15,"keaton-mitchell-lac":170.35,"emmett-johnson-kc":169.92,"ollie-gordon-mia":170.23,"jaydon-blue-dal":170.05,"deebo-samuel-":169.81,"samaje-perine-cin":170.63,"stefon-diggs-":164.93,"chris-brooks-gb":170.17,"brandon-aiyuk-":170.43,"kimani-vidal-lac":170.27,"nicholas-singleton-ten":170.06,"ray-davis-buf":170.59,"marshawn-lloyd-gb":170.36,"chris-bell-mia":170.44,"jordan-james-sf":170.27,"kayshon-boutte-ne":170.52,"demond-claiborne-min":170.15,"jaylen-wright-mia":170.17,"sean-tucker-tb":170.22,"trey-benson-ari":170.17,"kaelon-black-sf":170.17,"jauan-jennings-min":169.42,"isaac-teslaa-det":170,"rashod-bateman-bal":170.41,"darnell-mooney-nyg":170.1,"zachariah-branch-atl":170.03,"tyreek-hill-":169.03,"cooper-kupp-sea":168.71,"jaylin-noel-hou":170.74,"tank-dell-hou":170.17,"troy-franklin-den":170.67,"chris-brazzell-car":170.23,"tre-harris-lac":170.44};
+const ADP={"jaxon-smith-njigba-sea":5.85,"ja-marr-chase-cin":4.58,"puka-nacua-lar":3.66,"amon-ra-st-brown-det":8.17,"bijan-robinson-atl":2.65,"jahmyr-gibbs-det":1.62,"christian-mccaffrey-sf":6.14,"drake-london-atl":19.57,"george-pickens-dal":27.9,"jonathan-taylor-ind":8.11,"ceedee-lamb-dal":10.49,"justin-jefferson-min":11.88,"a-j-brown-ne":26.15,"nico-collins-hou":27.55,"tee-higgins-cin":55.47,"de-von-achane-mia":12.92,"tetairoa-mcmillan-car":40.05,"zay-flowers-bal":42.54,"james-cook-buf":14.27,"josh-allen-buf":22.77,"terry-mclaurin-wsh":59.86,"devonta-smith-phi":37.78,"rashee-rice-kc":22.51,"jaylen-waddle-den":59.3,"ladd-mcconkey-lac":55.38,"luther-burden-chi":76.09,"derrick-henry-bal":20.31,"chase-brown-cin":26.49,"chris-olave-no":35.59,"emeka-egbuka-tb":39.83,"davante-adams-lar":46.01,"garrett-wilson-nyj":34.58,"dj-moore-buf":69.88,"ashton-jeanty-lv":17.56,"omarion-hampton-lac":20.47,"mike-evans-sf":88.02,"carnell-tate-ten":67.43,"kenneth-walker-kc":28.62,"jameson-williams-det":66.44,"breece-hall-nyj":32.45,"kyren-williams-lar":39.91,"saquon-barkley-phi":16.98,"cam-skattebo-nyg":43.73,"josh-jacobs-gb":25.97,"marvin-harrison-ari":83.92,"makai-lemon-phi":106.87,"javonte-williams-dal":37.2,"rome-odunze-chi":71.08,"travis-etienne-no":47.06,"jeremiyah-love-ari":17.28,"alec-pierce-ind":92.68,"parker-washington-jax":100.74,"courtland-sutton-den":85.38,"christian-watson-gb":96.97,"jordan-addison-min":120.9,"drake-maye-ne":47.65,"jordyn-tyson-no":96.8,"dk-metcalf-pit":86.01,"michael-pittman-pit":89.57,"malik-nabers-nyg":45.64,"lamar-jackson-bal":40.29,"david-montgomery-hou":72.55,"ricky-pearsall-sf":119.44,"treveyon-henderson-ne":66.21,"jakobi-meyers-jax":108.99,"quinshon-judkins-cle":52.64,"kenneth-gainwell-tb":121.3,"rhamondre-stevenson-ne":109.02,"wan-dale-robinson-ten":112.39,"jayden-reed-gb":136.96,"jadarian-price-sea":74.37,"josh-downs-ind":136.44,"quentin-johnston-lac":143.72,"tony-pollard-ten":86.42,"colston-loveland-chi":45.49,"d-andre-swift-chi":70.82,"chris-godwin-tb":139.41,"jayden-higgins-hou":158.62,"brock-bowers-lv":23.21,"xavier-worthy-kc":139.53,"joe-burrow-cin":59.61,"chuba-hubbard-car":106.16,"brian-thomas-jax":100.48,"bhayshul-tuten-jax":75.83,"michael-wilson-ari":113.32,"rico-dowdle-pit":105.86,"rj-harvey-den":122.48,"jaylen-warren-pit":100.27,"trey-mcbride-ari":18.38,"romeo-doubs-ne":146.11,"bucky-irving-tb":55.78,"omar-cooper-nyj":168.61,"jalen-hurts-phi":53.75,"matthew-golden-gb":104.14,"jalen-coker-car":161.66,"khalil-shakir-buf":133.29,"tyler-warren-ind":46.79,"kyle-monangai-chi":122.57,"jayden-daniels-wsh":51.7,"aaron-jones-min":117.6,"rashid-shaheed-sea":157.1,"jalen-nailor-lv":169.62,"sam-laporta-det":69.21,"dak-prescott-dal":91.07,"brock-purdy-sf":101.61,"harold-fannin-cle":77.34,"blake-corum-lar":135.85,"jordan-mason-min":146.69,"caleb-williams-chi":90.82,"tucker-kraft-gb":108.33,"antonio-williams-wsh":169.68,"trevor-lawrence-jax":93.76,"tyquan-thornton-kc":169.97,"calvin-ridley-ten":167.55,"patrick-mahomes-kc":102.6,"jaxson-dart-nyg":73.05,"emanuel-wilson-sea":170.7,"adonai-mitchell-nyj":169.9,"travis-kelce-kc":99.82,"andrei-iosivas-cin":170.15,"rachaad-white-wsh":121.69,"jacory-croskey-merritt-wsh":139.71,"kc-concepcion-cle":143.38,"denzel-boston-cle":167.53,"chris-rodriguez-jax":168.57,"caleb-douglas-mia":170.22,"isaiah-likely-nyg":127.01,"j-k-dobbins-den":119.15,"jonathon-brooks-car":131.4,"george-kittle-sf":85.21,"jerry-jeudy-cle":162.72,"kyle-pitts-atl":65.56,"jalen-mcmillan-tb":166.8,"bo-nix-den":98.28,"jared-goff-det":141.04,"germie-bernard-pit":169.47,"tre-tucker-lv":168.3,"matthew-stafford-lar":79.83,"jack-bech-lv":170.86,"ryan-flournoy-dal":170.31,"justin-herbert-lac":107.84,"malik-washington-mia":170.14,"jake-ferguson-dal":108.13,"dalton-kincaid-buf":136.19,"mark-andrews-bal":120.47,"brenton-strange-jax":166.29,"kyler-murray-min":148.62,"dallas-goedert-phi":100.27,"t-j-hockenson-min":132.18,"baker-mayfield-tb":149.49,"hunter-henry-ne":142.27,"malik-willis-mia":166.54,"greg-dulcich-mia":170.2,"tyler-shough-no":153.13,"chig-okonkwo-wsh":168.51,"jordan-love-gb":159.86,"dalton-schultz-hou":167.97,"c-j-stroud-hou":166.42,"kenyon-sadiq-nyj":134.7,"cam-ward-ten":167.05,"pat-freiermuth-pit":168.72,"daniel-jones-ind":162.81,"juwan-johnson-no":163.64,"sam-darnold-sea":164.04,"david-njoku-lac":170.07,"bryce-young-car":168.36,"jacoby-brissett-ari":170.14,"aaron-rodgers-pit":169.46,"tua-tagovailoa-atl":170.67,"geno-smith-nyj":170.23,"shedeur-sanders-cle":169.45,"kirk-cousins-lv":169.99,"isiah-pacheco-det":157.44,"alvin-kamara-no":155.95,"tyrone-tracy-nyg":167.47,"dylan-sampson-cle":170.51,"tyler-allgeier-ari":169.76,"woody-marks-hou":149,"brian-robinson-atl":168.98,"justice-hill-bal":170.36,"braelon-allen-nyj":169.24,"tyjae-spears-ten":167.09,"tank-bigsby-phi":168.44,"ty-johnson-buf":170.35,"mike-washington-lv":170.19,"jonah-coleman-den":170.01,"kaytron-allen-wsh":170.15,"keaton-mitchell-lac":170.35,"emmett-johnson-kc":169.92,"ollie-gordon-mia":170.23,"jaydon-blue-dal":170.05,"deebo-samuel-":169.81,"samaje-perine-cin":170.63,"stefon-diggs-":164.93,"chris-brooks-gb":170.17,"brandon-aiyuk-":170.43,"kimani-vidal-lac":170.27,"nicholas-singleton-ten":170.06,"ray-davis-buf":170.59,"marshawn-lloyd-gb":170.36,"chris-bell-mia":170.44,"jordan-james-sf":170.27,"kayshon-boutte-ne":170.52,"demond-claiborne-min":170.15,"jaylen-wright-mia":170.17,"sean-tucker-tb":170.22,"trey-benson-ari":170.17,"kaelon-black-sf":170.17,"jauan-jennings-min":169.42,"isaac-teslaa-det":170,"rashod-bateman-bal":170.41,"darnell-mooney-nyg":170.1,"zachariah-branch-atl":170.03,"tyreek-hill-":169.03,"cooper-kupp-sea":168.71,"jaylin-noel-hou":170.74,"tank-dell-hou":170.17,"troy-franklin-den":170.67,"chris-brazzell-car":170.23,"tre-harris-lac":170.44};
 
-/* Per-player ADP standard deviation, measured from 3,526 real mock drafts
-   (fantasyfootballcalculator.com, PPR 12-team, week of 2026-07-21). ESPN
-   publishes no variance at all, and FFC sends no CORS headers, so this is
-   baked. 184 of 222 covered -- the rest fall outside FFC's 180-pick pool
-   and use the fitted fallback in adpSigma(). */
-const ADP_SD_ASOF="2026-07-28";
-/* ESPN crams 58 players onto adp ~170 -- its scale simply stops resolving
-   past ~165, which wrecks both the deep board order and the deep odds.
-   These replacements come from FFC real mock drafts where it ranks the
-   player, and are synthetic ranks below FFC's floor (190+) for the 34 it
-   never sees, which are effectively undrafted. Applied at lookup time so
-   it survives a live ESPN refresh. */
-const ADP_KD={"brandon-aubrey-dal":85.2,"broncos-den":89.9,"texans-hou":91.4,"rams-lar":98.2,"seahawks-sea":106.2,"cameron-dicker-lac":110.3,"steelers-pit":118.2,"ravens-bal":134.8,"ka-imi-fairbairn-hou":134.9,"eagles-phi":135.7,"cam-little-jax":137.4,"patriots-ne":145.4,"eddy-pineiro-sf":150.3,"harrison-butker-kc":151.0,"lions-det":151.5,"browns-cle":151.6,"chiefs-kc":160.7,"chargers-lac":161.2,"tyler-loop-bal":161.9,"chris-boswell-pit":162.3,"jaguars-jax":164.6,"will-reichard-min":174.0,"cairo-santos-chi":180.0,"cowboys-dal":186.0,"packers-gb":192.0,"vikings-min":212.5,"49ers-sf":213.0,"buccaneers-tb":213.5,"evan-mcpherson-cin":214.0,"jake-elliott-phi":214.5,"bills-buf":215.0,"giants-nyg":215.5,"bears-chi":216.0,"matt-gay-wsh":216.5,"dolphins-mia":217.0,"bengals-cin":217.5,"raiders-lv":218.0,"panthers-car":218.5,"commanders-wsh":219.0,"tyler-bass-buf":219.5,"jason-sanders-mia":220.0,"ryan-fitzgerald-car":220.5,"cardinals-ari":221.0,"titans-ten":221.5,"falcons-atl":222.0,"andre-szmyt-cle":222.5,"jake-moody-chi":223.0,"ben-sauls-nyg":223.5,"chad-ryland-ari":224.0,"nick-folk-nyj":224.5,"jets-nyj":225.0,"zane-gonzalez-atl":225.5,"joey-slye-ten":226.0,"saints-no":226.5,"andy-borregales-ne":227.0,"wil-lutz-den":227.5,"blake-grupe-no":228.0,"colts-ind":228.5};
-const ADP_TAIL=165;
-const ADP_TAILFIX={"aaron-rodgers-pit":188.6,"adonai-mitchell-nyj":158.1,"andrei-iosivas-cin":195.5,"antonio-williams-wsh":151.8,"braelon-allen-nyj":173.1,"brandon-aiyuk-":147.0,"brenton-strange-jax":146.1,"brian-robinson-atl":156.9,"bryce-young-car":163.6,"c-j-stroud-hou":147.9,"caleb-douglas-mia":199.0,"calvin-ridley-ten":156.7,"cam-ward-ten":167.6,"chig-okonkwo-wsh":165.1,"chris-bell-mia":203.0,"chris-brazzell-car":201.0,"chris-brooks-gb":197.0,"chris-rodriguez-jax":151.1,"cooper-kupp-sea":167.6,"dalton-schultz-hou":182.3,"darnell-mooney-nyg":194.5,"david-njoku-lac":194.0,"deebo-samuel-":191.5,"demond-claiborne-min":196.5,"denzel-boston-cle":136.8,"dylan-sampson-cle":157.5,"emanuel-wilson-sea":205.5,"emmett-johnson-kc":192.0,"geno-smith-nyj":200.0,"germie-bernard-pit":162.3,"greg-dulcich-mia":170.0,"isaac-teslaa-det":169.6,"jack-bech-lv":206.5,"jacoby-brissett-ari":195.0,"jalen-mcmillan-tb":138.9,"jalen-nailor-lv":146.5,"jauan-jennings-min":133.7,"jaydon-blue-dal":137.2,"jaylen-wright-mia":197.5,"jaylin-noel-hou":206.0,"jonah-coleman-den":167.7,"jordan-james-sf":202.0,"justice-hill-bal":152.6,"kaelon-black-sf":198.5,"kayshon-boutte-ne":204.0,"kaytron-allen-wsh":196.0,"keaton-mitchell-lac":160.2,"kimani-vidal-lac":201.5,"kirk-cousins-lv":193.0,"malik-washington-mia":156.5,"malik-willis-mia":165.7,"marshawn-lloyd-gb":122.6,"mike-washington-lv":148.9,"nicholas-singleton-ten":193.5,"ollie-gordon-mia":200.5,"omar-cooper-nyj":130.7,"pat-freiermuth-pit":190.0,"rashod-bateman-bal":160.2,"ray-davis-buf":204.5,"ryan-flournoy-dal":162.2,"samaje-perine-cin":159.8,"sean-tucker-tb":199.5,"shedeur-sanders-cle":191.0,"tank-bigsby-phi":166.6,"tank-dell-hou":164.2,"tre-harris-lac":203.5,"tre-tucker-lv":136.6,"trey-benson-ari":198.0,"troy-franklin-den":171.3,"tua-tagovailoa-atl":205.0,"ty-johnson-buf":202.5,"tyjae-spears-ten":121.9,"tyler-allgeier-ari":162.3,"tyquan-thornton-kc":192.5,"tyreek-hill-":190.5,"tyrone-tracy-nyg":156.5,"zachariah-branch-atl":173.9};
-
-const ADP_SD={"travis-hunter-jax":13.8,"jaxon-smith-njigba-sea":1.7,"ja-marr-chase-cin":1.2,"puka-nacua-lar":0.7,"amon-ra-st-brown-det":1.5,"bijan-robinson-atl":0.8,"jahmyr-gibbs-det":0.8,"christian-mccaffrey-sf":1.1,"drake-london-atl":2.1,"george-pickens-dal":3.2,"jonathan-taylor-ind":1.7,"ceedee-lamb-dal":2.4,"justin-jefferson-min":2.6,"a-j-brown-ne":2.6,"nico-collins-hou":3.1,"tee-higgins-cin":3.9,"de-von-achane-mia":1.6,"tetairoa-mcmillan-car":3.4,"zay-flowers-bal":4.1,"james-cook-buf":2.6,"josh-allen-buf":6.7,"terry-mclaurin-wsh":4.3,"devonta-smith-phi":3.4,"rashee-rice-kc":3.9,"jaylen-waddle-den":4.2,"ladd-mcconkey-lac":4.4,"luther-burden-chi":5.8,"derrick-henry-bal":2.5,"chase-brown-cin":2.9,"chris-olave-no":3.5,"emeka-egbuka-tb":5.2,"davante-adams-lar":4.3,"garrett-wilson-nyj":3.3,"dj-moore-buf":9.4,"ashton-jeanty-lv":2.3,"omarion-hampton-lac":2.9,"mike-evans-sf":5.5,"carnell-tate-ten":7.2,"kenneth-walker-kc":3.0,"jameson-williams-det":5.5,"breece-hall-nyj":3.6,"kyren-williams-lar":4.2,"saquon-barkley-phi":3.3,"cam-skattebo-nyg":5.1,"josh-jacobs-gb":3.5,"marvin-harrison-ari":9.4,"makai-lemon-phi":11.7,"javonte-williams-dal":4.4,"rome-odunze-chi":6.4,"travis-etienne-no":5.3,"jeremiyah-love-ari":2.2,"alec-pierce-ind":8.8,"parker-washington-jax":8.1,"courtland-sutton-den":7.7,"christian-watson-gb":6.5,"jordan-addison-min":10.0,"drake-maye-ne":6.6,"jordyn-tyson-no":9.8,"dk-metcalf-pit":7.0,"michael-pittman-pit":7.4,"malik-nabers-nyg":7.5,"lamar-jackson-bal":8.2,"david-montgomery-hou":5.7,"ricky-pearsall-sf":8.6,"treveyon-henderson-ne":6.3,"jakobi-meyers-jax":8.6,"quinshon-judkins-cle":5.3,"rhamondre-stevenson-ne":6.4,"wan-dale-robinson-ten":10.6,"jayden-reed-gb":7.7,"jadarian-price-sea":8.5,"josh-downs-ind":9.0,"quentin-johnston-lac":10.0,"tony-pollard-ten":8.8,"colston-loveland-chi":5.5,"d-andre-swift-chi":4.4,"chris-godwin-tb":7.5,"jayden-higgins-hou":9.4,"brock-bowers-lv":5.8,"xavier-worthy-kc":8.0,"joe-burrow-cin":7.9,"chuba-hubbard-car":9.1,"brian-thomas-jax":7.9,"bhayshul-tuten-jax":6.6,"michael-wilson-ari":7.8,"rico-dowdle-pit":6.5,"rj-harvey-den":13.5,"jaylen-warren-pit":5.4,"trey-mcbride-ari":4.9,"romeo-doubs-ne":7.5,"bucky-irving-tb":5.3,"omar-cooper-nyj":13.8,"jalen-hurts-phi":15.3,"matthew-golden-gb":7.8,"jalen-coker-car":9.8,"khalil-shakir-buf":8.6,"tyler-warren-ind":6.3,"kyle-monangai-chi":13.6,"jayden-daniels-wsh":12.7,"aaron-jones-min":12.3,"rashid-shaheed-sea":7.8,"jalen-nailor-lv":13.7,"sam-laporta-det":9.4,"dak-prescott-dal":8.1,"brock-purdy-sf":16.7,"harold-fannin-cle":7.8,"blake-corum-lar":14.2,"jordan-mason-min":13.8,"caleb-williams-chi":14.8,"tucker-kraft-gb":8.2,"antonio-williams-wsh":13.3,"trevor-lawrence-jax":10.7,"calvin-ridley-ten":11.6,"patrick-mahomes-kc":17.6,"jaxson-dart-nyg":11.6,"adonai-mitchell-nyj":16.2,"travis-kelce-kc":17.7,"rachaad-white-wsh":12.3,"jacory-croskey-merritt-wsh":13.5,"kc-concepcion-cle":8.8,"denzel-boston-cle":6.7,"chris-rodriguez-jax":16.3,"isaiah-likely-nyg":18.8,"j-k-dobbins-den":11.1,"jonathon-brooks-car":16.5,"george-kittle-sf":17.5,"jerry-jeudy-cle":13.8,"kyle-pitts-atl":14.0,"jalen-mcmillan-tb":12.5,"bo-nix-den":10.9,"jared-goff-det":14.1,"germie-bernard-pit":11.6,"tre-tucker-lv":7.6,"matthew-stafford-lar":13.2,"ryan-flournoy-dal":13.9,"justin-herbert-lac":11.1,"malik-washington-mia":17.5,"jake-ferguson-dal":18.1,"dalton-kincaid-buf":15.9,"mark-andrews-bal":16.9,"brenton-strange-jax":18.0,"kyler-murray-min":14.2,"dallas-goedert-phi":15.6,"t-j-hockenson-min":20.2,"baker-mayfield-tb":11.3,"hunter-henry-ne":14.5,"malik-willis-mia":14.7,"greg-dulcich-mia":17.2,"tyler-shough-no":13.2,"chig-okonkwo-wsh":15.9,"jordan-love-gb":7.1,"dalton-schultz-hou":10.5,"c-j-stroud-hou":10.9,"kenyon-sadiq-nyj":15.5,"cam-ward-ten":15.0,"daniel-jones-ind":11.2,"juwan-johnson-no":11.8,"sam-darnold-sea":15.2,"bryce-young-car":26.0,"aaron-rodgers-pit":17.1,"isiah-pacheco-det":19.3,"alvin-kamara-no":20.2,"tyrone-tracy-nyg":17.9,"dylan-sampson-cle":16.7,"tyler-allgeier-ari":22.8,"woody-marks-hou":22.8,"brian-robinson-atl":17.7,"justice-hill-bal":26.7,"braelon-allen-nyj":31.8,"tyjae-spears-ten":13.1,"tank-bigsby-phi":8.6,"mike-washington-lv":45.6,"jonah-coleman-den":10.0,"keaton-mitchell-lac":31.1,"jaydon-blue-dal":28.6,"samaje-perine-cin":14.0,"brandon-aiyuk-":12.5,"marshawn-lloyd-gb":31.9,"jauan-jennings-min":11.7,"isaac-teslaa-det":13.3,"rashod-bateman-bal":17.8,"zachariah-branch-atl":6.3,"cooper-kupp-sea":14.1,"tank-dell-hou":24.3,"troy-franklin-den":7.9};
-
-const TABS=[{key:"overall",label:"Overall"},{key:"qb",label:"QB"},{key:"rb",label:"RB"},{key:"wr",label:"WR"},{key:"te",label:"TE"},{key:"flex",label:"Flex"},{key:"k",label:"K"},{key:"dst",label:"DST"}];
+const TABS=[{key:"overall",label:"Overall"},{key:"qb",label:"QB"},{key:"rb",label:"RB"},{key:"wr",label:"WR"},{key:"te",label:"TE"},{key:"flex",label:"Flex"}];
 const FLEX=new Set(["RB","WR","TE"]);
 
 const KEY="ff2026:board:v4";
@@ -601,11 +489,8 @@ const ADP_KEY="ff2026:adp";
 let adpLive=null;
 try{const _a=localStorage.getItem(ADP_KEY);if(_a)adpLive=JSON.parse(_a);}catch(e){}
 function adpOf(pid){
-  const live=(adpLive&&adpLive.map)?adpLive.map[pid]:null;
-  const e=(live!=null)?live:(ADP[pid]!=null?ADP[pid]:ADP_KD[pid]);
-  if(e==null)return null;
-  // Past ADP_TAIL the ESPN scale has stopped resolving; prefer the repaired value.
-  return (e>=ADP_TAIL&&ADP_TAILFIX[pid]!=null)?ADP_TAILFIX[pid]:e;
+  if(adpLive&&adpLive.map&&adpLive.map[pid]!=null)return adpLive.map[pid];
+  return ADP[pid]==null?null:ADP[pid];
 }
 function adpAsOf(){return (adpLive&&adpLive.asof)||ADP_ASOF;}
 function adpCount(){return Object.keys((adpLive&&adpLive.map)||ADP).length;}
@@ -642,21 +527,15 @@ async function storeSet(k,v){
   if(HAS_WS){try{return await window.storage.set(k,v);}catch(e){}}
   try{localStorage.setItem(k,v);}catch(e){}
 }
-/* Declared up here, above load() and adopt(), because both read it -- the rest
-   of the draft code lives further down. Same reason as the ADP accessors. */
-const DRAFT_DEF={on:false,teams:12,slot:1,snake:true,offset:0,vol:1};
-let draftCfg=Object.assign({},DRAFT_DEF);
-
 async function load(){
   try{const r=await storeGet(KEY);if(r&&r.value)store=JSON.parse(r.value);}catch(e){}
   store.master=reconcileMaster(store.master);
   drafted=new Set(store.drafted||[]);
   tiers=(store.tiers&&!Array.isArray(store.tiers))?store.tiers:{};
-  draftCfg=Object.assign({},DRAFT_DEF,store.draft||{});
 }
 let saveTimer=null;
 function save(){
-  store.drafted=[...drafted];store.tiers=tiers;store.draft=draftCfg;store.updatedAt=Date.now();
+  store.drafted=[...drafted];store.tiers=tiers;store.updatedAt=Date.now();
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{storeSet(KEY,JSON.stringify(store));},120);
   pushRemote();
@@ -699,7 +578,6 @@ function adopt(remote){
   store.master=reconcileMaster(store.master);
   drafted=new Set(store.drafted||[]);
   tiers=(store.tiers&&!Array.isArray(store.tiers))?store.tiers:{};
-  draftCfg=Object.assign({},DRAFT_DEF,store.draft||{});
 }
 // Last write wins, compared on the updatedAt stamped into the blob by save().
 async function pullRemote(){
@@ -725,7 +603,7 @@ function pushRemote(){
     catch(e){setSyncState("error");}
   },600);
 }
-function renderAll(){renderTabs();renderList();applyFilter();paintDraftBar();}
+function renderAll(){renderTabs();renderList();applyFilter();}
 function paintSyncBtn(){
   const b=document.getElementById("syncbtn");if(!b)return;
   const on=syncReady()&&!!getCode();
@@ -796,200 +674,12 @@ async function refreshAdp(){
 function todayISO(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function prettyDate(iso){const b=String(iso).split("-");return b.length===3?MON[+b[1]-1]+" "+(+b[2])+", "+b[0]:iso;}
 
-/* ---------- Draft mode ---------------------------------------------
-   The pick counter is derived from how many players are crossed off, so
-   the board stays the single source of truth -- but that only holds if
-   every pick gets marked, not just yours. offset absorbs the drift when
-   you fall behind, without having to fake-draft players to catch up. */
-function myPicks(){
-  const n=draftCfg.teams,s=Math.min(Math.max(draftCfg.slot,1),n),out=[];
-  const rounds=Math.max(1,Math.ceil(PLAYERS.length/n));
-  for(let r=1;r<=rounds;r++)out.push((r-1)*n+((draftCfg.snake&&r%2===0)?(n-s+1):s));
-  return out;
-}
-function pickNow(){return Math.max(1,drafted.size+1+(draftCfg.offset||0));}
-function nextMyPicks(k){const p=pickNow();return myPicks().filter(x=>x>=p).slice(0,k);}
-function nextMyPick(){return nextMyPicks(1)[0]||null;}
-
-/* ---------- Availability odds -------------------------------------------
-   Treat a player's draft slot as normal around his ADP and read off the
-   chance he survives to a given pick.
-
-   Sigma is measured, not guessed: ADP_SD carries each player's observed
-   standard deviation across 3,526 real drafts. That matters -- at adp 40
-   and pick 55, sigma 4 says 0% and sigma 25 says 27%, so a hand-picked
-   constant would have decided the answer. The spread also is not a fixed
-   fraction of ADP: the observed ratio falls from ~0.24 at the top of the
-   board to ~0.11 deep, so the fallback for the 38 players FFC doesn't
-   cover is a least-squares line over the 184 it does (mean error 2.6
-   picks), not a flat percentage.
-
-   Closed form rather than Monte Carlo: for "does he last to pick P" a
-   simulation samples the same normal and answers the same question, but
-   with noise -- and the board recomputes on every pick, so the numbers
-   would visibly wobble between repaints. Simulation earns its keep on
-   joint questions ("will at least one of these three last"), not this.  */
-function normCdf(z){
-  const t=1/(1+0.2316419*Math.abs(z)),d=0.3989422804014327*Math.exp(-z*z/2);
-  const p=d*t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));
-  return z>0?1-p:p;
-}
-function adpSigma(pid,a){
-  const m=ADP_SD[pid];
-  return Math.max(0.6,(m!=null?m:1.411+0.0973*a)*(draftCfg.vol||1));
-}
-function pLastsRaw(pid,pick){
-  const a=adpOf(pid);
-  if(a==null)return null;
-  return 1-normCdf((pick-a)/adpSigma(pid,a));   // P(his slot falls past this pick)
-}
-
-/* ---------- Monte Carlo draft --------------------------------------------
-   The closed form treats every player independently, so it never enforces
-   that exactly one player leaves the board per pick. Measured, that drifts
-   badly: the marginals implied 185 players gone by pick 180, when only 179
-   picks exist.
-
-   Simulating fixes it by construction. Give each remaining player a noisy
-   score (adp + sigma*Z), sort, and that ordering IS a draft -- the k-th man
-   goes at pick now+k-1. Because picks are assigned by RANK rather than by
-   ADP magnitude, the whole scale-calibration problem stops mattering; only
-   relative order and spread do.
-
-   There are no phantom picks, and there shouldn't be: ten picks take ten real
-   players. An earlier version inserted them to close an apparent shortfall --
-   fewer players carrying an ADP below pick K than K-1. That shortfall is real
-   but it is NOT missing players. Checked directly, exactly one player with ADP
-   under 120 is absent from this board (Travis Hunter); and ESPN's own complete
-   368-player universe shows the same shortfall, -10 by pick 80 and -14 by 100.
-   It is a property of how ESPN averages ADP: the scale is stretched by roughly
-   7% against real pick numbers.
-
-   That is precisely why simulating beats the closed form. Assigning picks by
-   RANK absorbs a stretched scale automatically -- a player listed at ADP 50
-   who truly goes around pick 46 gets drafted in that window because he ranks
-   there, not because his number says so. Phantoms "fixed" the stretch by
-   pretending the board was incomplete, which double-counted the correction.
-
-   Seeded on the board state, so a given position always yields the same
-   numbers -- no wobble between repaints, which was the original objection
-   to simulating at all. One run scores every player at once, so the cost is
-   per pick, not per card.                                                  */
-const MC_SIMS=1500;
-function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-let mcCache=null;
-function mcKey(){return draftCfg.on?(pickNow()+"|"+drafted.size+"|"+draftCfg.teams+"|"+draftCfg.slot+"|"+draftCfg.snake+"|"+draftCfg.vol+"|"+(adpLive?adpLive.asof:"base")):"off";}
-function mcRun(){
-  const key=mcKey();
-  if(mcCache&&mcCache.key===key)return mcCache;
-  const now=pickNow(),targets=oddsPicks(3);
-  const pool=[];
-  store.master.forEach(id=>{
-    if(drafted.has(id))return;
-    const a=adpOf(id);
-    if(a!=null)pool.push({id:id,a:a,s:adpSigma(id,a)});
-  });
-  const hits={};pool.forEach(p=>{hits[p.id]=[0,0,0];});
-  if(!targets.length||!pool.length){mcCache={key:key,targets:targets,p:{},n:0};return mcCache;}
-  const rnd=mulberry32(1013904223^(now*2654435761));
-  const np=pool.length;
-  const score=new Float64Array(np),order=new Array(np);
-  const cmp=(x,y)=>score[x]-score[y];
-  const nt=targets.length;
-  for(let s=0;s<MC_SIMS;s++){
-    for(let i=0;i<np;i++){
-      let u=rnd();if(u<1e-12)u=1e-12;
-      score[i]=pool[i].a+pool[i].s*Math.sqrt(-2*Math.log(u))*Math.cos(6.283185307179586*rnd());
-      order[i]=i;
-    }
-    order.sort(cmp);
-    for(let r=0;r<np;r++){
-      const at=now+r,h=hits[pool[order[r]].id];   // rank r means he goes at pick now+r
-      for(let t=0;t<nt;t++) if(at>=targets[t])h[t]++;
-    }
-  }
-  const out={};
-  for(const id in hits)out[id]=hits[id].map(c=>c/MC_SIMS);
-  mcCache={key:key,targets:targets,p:out,n:MC_SIMS};
-  return mcCache;
-}
-/* Condition on what the board already proves: he is undrafted right now.
-   Skipping this understated bubble players by 14-16 points, and produced an
-   outright absurdity -- a player sitting on your screen at your own pick read
-   4% when he is provably available. P(slot>K | slot>=now) = surv(K)/surv(now),
-   which collapses to 1 at K=now, as it must. */
-/* Reads the simulation when draft mode is running -- conditioning on "he is
-   still here" is automatic there, since only undrafted players are simulated.
-   Falls back to the conditioned closed form outside a draft. */
-function pLasts(pid,pick){
-  const now=pickNow();
-  if(adpOf(pid)==null)return null;
-  if(pick<=now)return 1;
-  if(draftCfg.on){
-    const mc=mcRun(),t=mc.targets.indexOf(pick);
-    if(t>=0&&mc.p[pid])return mc.p[pid][t];
-  }
-  const raw=pLastsRaw(pid,pick),base=pLastsRaw(pid,now);
-  if(base<=1e-6)return 0;
-  return Math.max(0,Math.min(1,raw/base));
-}
-// On the clock, "lasts to your pick" is trivially yes -- the useful question
-// becomes the pick after that.
-function oddsPicks(k){const p=pickNow();return myPicks().filter(x=>x>p).slice(0,k);}
-function badgePick(){return oddsPicks(1)[0]||null;}
-function roundOf(p){return Math.ceil(p/draftCfg.teams);}
-/* ADP is an average, not a promise -- real picks scatter around it. One full
-   round either side of your next pick is the honest coin-flip band; anything
-   tighter would dress up guesswork as certainty. */
-/* Above 95% he is not a decision -- badging those painted 169 of 222 cards,
-   which is wallpaper, not signal. Long shots are never hidden: an available
-   player already past his ADP is a faller, the best read on the board. */
-function availability(pid){
-  if(!draftCfg.on||drafted.has(pid))return null;
-  const np=badgePick();if(!np)return null;
-  const p=pLasts(pid,np);
-  if(p==null||p>=0.95)return null;
-  return {p:p,cls:p>=0.7?"wait":(p>=0.35?"risky":"gone")};
-}
-function pct(p){return p>=0.995?"99%":(p<0.005?"<1%":Math.round(p*100)+"%");}
-function repaintAvail(){
-  listEl.classList.toggle("draftmode",!!draftCfg.on);
-  const cards=listEl.querySelectorAll(".card");
-  for(let i=0;i<cards.length;i++){
-    const el=cards[i].querySelector(".avail");if(!el)continue;
-    const v=availability(cards[i].dataset.id);
-    el.className="avail"+(v?" "+v.cls:"");
-    el.textContent=v?pct(v.p):"";
-  }
-}
-function paintDraftBar(){
-  const bar=document.getElementById("dbar");if(!bar)return;
-  if(!draftCfg.on){bar.hidden=true;bar.innerHTML="";return;}
-  bar.hidden=false;
-  const p=pickNow(),np=nextMyPick(),mine=(np===p);
-  bar.className="dbar"+(mine?" clock":"");
-  bar.innerHTML='<span class="dnow">Rd '+roundOf(p)+' &middot; Pick '+p+'</span>'
-    +(np?'<span class="dyou">'+(mine?"You’re on the clock":"You pick at "+np+" &middot; "+(np-p)+" away")+'</span>'
-        :'<span class="dyou">No picks left</span>')
-    +'<span class="dgear">Edit</span>';
-}
-function setDrafted(id,on){
-  if(on)drafted.add(id);else drafted.delete(id);
-  save();
-  const li=listEl.querySelector('.card[data-id="'+id+'"]');
-  if(li){
-    li.classList.toggle("drafted",on);
-    const b=li.querySelector(".draftbtn");if(b)b.textContent=on?"Undo":"Draft";
-  }
-  paintDraftBar();repaintAvail();
-}
-
 function cardHTML(id){
   const p=BY_ID[id];const isD=drafted.has(id);
   return '<li class="card'+(isD?" drafted":"")+'" data-id="'+id+'" style="--pc:'+POS_COLOR[p.pos]+'">'
     +'<span class="grip" title="Drag to reorder"><svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor"><circle cx="4" cy="4" r="1.6"/><circle cx="10" cy="4" r="1.6"/><circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="4" cy="16" r="1.6"/><circle cx="10" cy="16" r="1.6"/></svg></span>'
     +'<span class="rank"></span>'
-    +'<span class="meta"><div class="name">'+p.name+'</div><div class="team">'+(p.team||"FA")+adpBits(id)+'<span class="avail"></span> <span class="bye">· Bye '+p.bye+'</span></div></span>'
+    +'<span class="meta"><div class="name">'+p.name+'</div><div class="team">'+(p.team||"FA")+adpBits(id)+' <span class="bye">· Bye '+p.bye+'</span></div></span>'
     +'<span class="vorp"><span class="vval">'+fmtVorp(p.vorp)+'</span><span class="vlbl">VORP</span></span>'
     +'<span class="pos">'+p.pos+'</span>'
     +'<button class="draftbtn">'+(isD?"Undo":"Draft")+'</button></li>';
@@ -1013,7 +703,7 @@ function renderList(){
   }else{
     listEl.innerHTML=ids.map(cardHTML).join("");
   }
-  renumber();applyFilter();repaintAvail();
+  renumber();applyFilter();
 }
 // Read player order + break slots back out of the DOM after any drag/edit.
 function syncFromDOM(){
@@ -1053,9 +743,10 @@ listEl.addEventListener("click",e=>{
   if(tx){removeBreakEl(tx.closest(".tierbreak"));return;}
   const btn=e.target.closest(".draftbtn");
   if(btn){
-    const id=btn.closest(".card").dataset.id;
-    setDrafted(id,!drafted.has(id));
-    return;
+    const li=btn.closest(".card");const id=li.dataset.id;
+    if(drafted.has(id)){drafted.delete(id);li.classList.remove("drafted");btn.textContent="Draft";}
+    else{drafted.add(id);li.classList.add("drafted");btn.textContent="Undo";}
+    save();return;
   }
   if(e.target.closest(".grip"))return;
   const li=e.target.closest(".card");
@@ -1149,53 +840,21 @@ function schedTable(p){
   if(neutral)h+='<div class="note">* neutral-site game.</div>';
   return h;
 }
-function oddsBlock(p){
-  if(!draftCfg.on)return "";
-  const picks=oddsPicks(3);
-  if(!picks.length)return "";
-  const a=adpOf(p.id);
-  if(a==null)return '<div class="odds"><h4>Will he last?</h4><div class="note">No ADP for this player, so there’s nothing to project.</div></div>';
-  const sd=ADP_SD[p.id],onClock=(nextMyPick()===pickNow());
-  let rows="";
-  picks.forEach(k=>{
-    const pr=pLasts(p.id,k),cls=pr>=0.7?"wait":(pr>=0.35?"risky":"gone");
-    rows+='<div class="orow"><span class="ok">Pick '+k+'</span>'
-      +'<span class="obar"><i style="width:'+Math.round(pr*100)+'%"></i></span>'
-      +'<span class="avail '+cls+'">'+pct(pr)+'</span></div>';
-  });
-  return '<div class="odds"><h4>Chance he lasts to your pick</h4>'
-    +(onClock?'<div class="note" style="margin:0 0 8px">You’re on the clock — he’s available right now. These are your later turns.</div>':'')
-    +rows
-    +'<div class="note">ADP '+a.toFixed(1)+' &middot; spread &plusmn;'
-    +(sd!=null?sd.toFixed(1)+' from 3,526 real drafts':(1.411+0.0973*a).toFixed(1)+' estimated — he’s outside the sampled pool')
-    +'.</div></div>';
-}
 function overviewBody(p){
   const a=adpOf(p.id),d=adpDelta(p.id);
   const adpTile=a==null?"—":a.toFixed(1)+(!d?"":' <span class="tdelta'+(Math.abs(d)>=ADP_EDGE?(d>0?" up":" down"):"")+'">'+(d>0?"+":"")+d+'</span>');
-  const isKD=(p.pos==="K"||p.pos==="DST");
-  const tiles=isKD
-    ? [["ADP vs You",adpTile],["Bye",p.bye||"—"]]
-    : [["Proj Pts",p.fps==null?"—":p.fps],["VORP",fmtVorp(p.vorp)],
-       ["Auction",p.auc==null?"—":"$"+p.auc],["ADP vs You",adpTile]];
+  const tiles=[["Proj Pts",p.fps],["VORP",fmtVorp(p.vorp)],["Auction","$"+p.auc],["ADP vs You",adpTile]];
   const has=p.g25!=null;
   let body;
-  if(isKD){
-    body='<div class="note">No projections carried for kickers and defences. They’re on the board so every pick in the draft can be crossed off, which is what keeps the pick counter honest.</div>';
-  }else if(has){
+  if(has){
     body='<div class="cmphead"><span class="k"></span><span class="c">2026 Proj</span><span class="c">2025 ('+p.g25+'g)</span></div>'
       +p.stats.map(s=>'<div class="crow"><span class="k">'+s[0]+'</span><span class="c">'+s[1]+'</span><span class="c">'+(s[2]===""?"\u2014":s[2])+'</span></div>').join("");
   }else{
     body=p.stats.map(s=>'<div class="srow"><span class="k">'+s[0]+'</span><span class="v">'+s[1]+'</span></div>').join("")
-      // No projection row at all means he isn't in this board's source ranks --
-      // different from a rookie who is ranked but has no NFL history yet.
-      +'<div class="note">'+(p.stats.length
-        ?'No 2025 NFL stats (rookie or did not play)'
-        :'Not carried in this board’s projection source, so there’s no forecast here. His ADP is live and the <b>2025 Log</b> tab has his real games.')+'</div>';
+      +'<div class="note">No 2025 NFL stats (rookie or did not play)</div>';
   }
   return '<div class="tiles">'+tiles.map(t=>'<div class="tile"><div class="v">'+t[1]+'</div><div class="k">'+t[0]+'</div></div>').join("")+'</div>'
-    +oddsBlock(p)
-    +'<div class="mproj">'+(isKD?"":'<h4>'+(has?'2026 Projected vs 2025 Actual':'2026 Projected Stats')+'</h4>')+body+'</div>';
+    +'<div class="mproj"><h4>'+(has?'2026 Projected vs 2025 Actual':'2026 Projected Stats')+'</h4>'+body+'</div>';
 }
 const PTABS=[["overview","Overview"],["log","2025 Log"],["sched","2026 Sched"]];
 let curP=null,curPT="overview";
@@ -1206,10 +865,7 @@ function paintPlayer(){
     '<div class="mhead"><button class="mclose" aria-label="Close">\u00d7</button>'
     +'<div class="mname">'+p.name+'</div>'
     +'<div class="msub">'+p.pos+p.posrk+' &middot; '+teamBit+' &middot; Overall '+p.ovr+'</div>'
-    +'<div class="ptabs">'+PTABS.filter(t=>t[0]!=="log"||!(p.pos==="K"||p.pos==="DST"))
-        .map(t=>'<button class="ptab'+(t[0]===curPT?" on":"")+'" data-pt="'+t[0]+'">'+t[1]+'</button>').join("")+'</div></div>'
-    +'<div class="dact"><button class="reset'+(drafted.has(p.id)?" danger":"")+'" data-draftp="1">'
-      +(drafted.has(p.id)?"Un-draft — put him back on the board":"Cross off — mark as drafted")+'</button></div>'
+    +'<div class="ptabs">'+PTABS.map(t=>'<button class="ptab'+(t[0]===curPT?" on":"")+'" data-pt="'+t[0]+'">'+t[1]+'</button>').join("")+'</div></div>'
     +'<div id="pbody">'+(curPT==="overview"?overviewBody(p):curPT==="sched"?schedTable(p):'<div class="note">Loading 2025 game log\u2026</div>')+'</div>';
   if(curPT==="log"){
     const want=p.id;
@@ -1261,66 +917,6 @@ function openSync(){
   modalEl.innerHTML=h+'<p class="smsg" id="smsg"></p></div>';
   ovl.classList.add("show");
 }
-function openDraft(){
-  modalEl.style.removeProperty("--pc");
-  const n=draftCfg.teams;
-  let teams="",slots="";
-  for(let i=6;i<=16;i++)teams+='<option value="'+i+'"'+(i===n?" selected":"")+'>'+i+'</option>';
-  for(let i=1;i<=n;i++)slots+='<option value="'+i+'"'+(i===draftCfg.slot?" selected":"")+'>'+i+'</option>';
-  modalEl.innerHTML='<div class="mhead"><button class="mclose" aria-label="Close">×</button>'
-   +'<div class="mname">Draft mode</div>'
-   +'<div class="msub">'+(draftCfg.on?"On &middot; pick "+pickNow():"Off")+'</div></div>'
-   +'<div class="sync">'
-   +'<p class="snote">Crossing a player off advances the pick counter, so mark <b>every</b> pick — not just yours. Each remaining player then shows his chance of surviving to your next turn: '
-   +'<span class="avail wait">82%</span> likely, <span class="avail risky">50%</span> a coin flip, <span class="avail gone">9%</span> long shot. Anything above 95% is hidden — that’s not a decision.</p>'
-   +'<div class="drow"><label for="dteams">Teams</label><select id="dteams">'+teams+'</select></div>'
-   +'<div class="drow"><label for="dslot">Your slot</label><select id="dslot">'+slots+'</select></div>'
-   +'<div class="drow"><label for="dsnake">Snake order</label><input type="checkbox" id="dsnake"'+(draftCfg.snake?" checked":"")+'></div>'
-   +'<div class="drow"><label for="dpick">Current pick</label><input type="number" id="dpick" min="1" value="'+pickNow()+'"></div>'
-   +'<div class="drow"><label for="dvol">Your league runs</label><select id="dvol">'
-     +'<option value="0.7"'+(draftCfg.vol<0.85?" selected":"")+'>To chalk</option>'
-     +'<option value="1"'+(draftCfg.vol>=0.85&&draftCfg.vol<=1.15?" selected":"")+'>Typical</option>'
-     +'<option value="1.4"'+(draftCfg.vol>1.15?" selected":"")+'>Wild</option></select></div>'
-   +'<p class="snote">Correct <b>current pick</b> if you fall behind — it nudges the counter without you having to fake-draft anyone. Your turns: <b>'+myPicks().slice(0,6).join(", ")+'</b>…</p>'
-   +'<div class="syncbtns"><button class="reset" data-d="save">'+(draftCfg.on?"Update":"Start draft")+'</button>'
-   +(draftCfg.on?'<button class="reset danger" data-d="stop">End draft</button>':'')+'</div>'
-   +'<p class="snote">Odds use each player’s measured draft-position spread from 3,526 real mock drafts, so they’re grounded — but ADP itself is ESPN’s average league. If yours reaches or waits differently, set the dial above and treat every number as a lean, not a verdict.</p>'
-   +'<p class="smsg" id="smsg"></p></div>';
-  const dt=document.getElementById("dteams"),ds=document.getElementById("dslot");
-  if(dt&&ds)dt.addEventListener("change",()=>{
-    const k=+dt.value,cur=Math.min(+ds.value,k);let h="";
-    for(let i=1;i<=k;i++)h+='<option value="'+i+'"'+(i===cur?" selected":"")+'>'+i+'</option>';
-    ds.innerHTML=h;
-  });
-  ovl.classList.add("show");
-}
-document.getElementById("draftbtnmode").addEventListener("click",()=>openDraft());
-document.getElementById("dbar").addEventListener("click",()=>openDraft());
-modalEl.addEventListener("click",e=>{
-  const b=e.target.closest("[data-d]");if(!b)return;
-  if(b.dataset.d==="stop"){
-    draftCfg.on=false;save();paintDraftBar();repaintAvail();openDraft();
-    msg("Draft mode off. Your crossed-off players are untouched.","");
-    return;
-  }
-  const t=+document.getElementById("dteams").value||12;
-  draftCfg.teams=t;
-  draftCfg.slot=Math.min(+document.getElementById("dslot").value||1,t);
-  draftCfg.snake=document.getElementById("dsnake").checked;
-  draftCfg.offset=Math.max(1,+document.getElementById("dpick").value||1)-(drafted.size+1);
-  draftCfg.vol=+document.getElementById("dvol").value||1;
-  draftCfg.on=true;
-  save();paintDraftBar();repaintAvail();openDraft();
-  msg("Draft mode on — you’re up at pick "+nextMyPick()+".","good");
-});
-// Phones hide the card's Draft button, so the modal carries the only
-// cross-off control that works on the device you'll actually draft from.
-modalEl.addEventListener("click",e=>{
-  if(!e.target.closest("[data-draftp]")||!curP)return;
-  setDrafted(curP.id,!drafted.has(curP.id));
-  paintPlayer();
-});
-
 // How far the board has drifted from the ADP baseline -- shown before you decide
 // whether a refresh should reorder anything.
 function orderDrift(){
@@ -1520,7 +1116,7 @@ listEl.addEventListener("touchmove",()=>{lpMoved=true;clearTimeout(lpTimer);},{p
 listEl.addEventListener("touchend",()=>clearTimeout(lpTimer),{passive:true});
 
 (async function(){
-  await load();populateTeams();renderTabs();renderList();paintSyncBtn();paintDraftBar();
+  await load();populateTeams();renderTabs();renderList();paintSyncBtn();
   if(await pullRemote())renderAll();   // paint from local first, then correct from remote
 })();
 </script>

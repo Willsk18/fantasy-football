@@ -203,6 +203,21 @@ Schedules only need regenerating for a new season. Note that `shortName` uses `V
 `@`) for neutral-site games — a naive `@`-only parse silently drops those games, which is
 how a team ends up with 16 games instead of 17.
 
+> **STATUS — reverted.** Everything from "Draft mode" through "Monte Carlo" below is
+> **not in `index.html` right now.** The stack (draft mode → odds → K/DST → tail repair →
+> simulation) shipped across nine commits without a browser ever running it, and the board
+> stopped rendering. `index.html` was restored to `9424510`, the last version confirmed
+> working, and the features are being rebuilt one verifiable chunk at a time.
+>
+> The findings below are still accurate and were the expensive part — measured against real
+> data, not assumed. Keep them; re-apply the code gradually. Full implementations are in
+> git history: `83eabb4` draft mode, `136bfc8` odds, `d931191` tail repair, `ec105fe` K/DST,
+> `171a496` simulation, `880b9e4` phantom removal, `ea4ed4c` Travis Hunter.
+>
+> **Lesson worth keeping:** structural checks (brace balance, declaration order, no dupes)
+> passed on every one of those commits and still missed whatever broke it. They are not a
+> substitute for loading the page once.
+
 ### Draft mode
 
 `store.draft = {on, teams, slot, snake, offset}` — synced with the board, so settings and
