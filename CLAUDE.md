@@ -70,7 +70,8 @@ player ids. They only exist on the four position tabs.
 ### Persistence
 
 localStorage keys in use: `ff2026:board:v4` (the board), `ff2026:synccode` (sync code),
-`ff2026:gl:<espnId>` (cached 2025 game logs). Only the first is synced to Supabase.
+`ff2026:gl:<espnId>` (cached 2025 game logs), `ff2026:adp` (refreshed ADP). Only the
+first is synced to Supabase.
 
 `store = {master, drafted, tiers, updatedAt}`, JSON-serialized under `ff2026:board:v4`
 in localStorage. `storeGet`/`storeSet` wrap this and are `async` specifically so remote
@@ -128,6 +129,36 @@ since a QB's stat columns are not a WR's. Fantasy points are computed client-sid
 
 Rookies return a payload with no `seasonTypes` key at all; `trimGameLog` degrades to an
 empty row list and the tab shows a "no games" note.
+
+### ADP
+
+`ADP` maps player id to ESPN's PPR average draft position, baked from
+`lm-api-reads.fantasy.espn.com` with `view=kona_player_info` and an
+`X-Fantasy-Filter` header. 220 of 222 are covered — Keenan Allen (unsigned) and
+Brashard Smith fall outside ESPN's top 400 and genuinely have no ADP.
+
+The **ADP** button opens a panel with a live refresh that overwrites the baked values
+and stores them under `ff2026:adp` as `{asof, map}`. `adpOf()` prefers the live copy.
+The refresh is deliberately manual because that view costs **~35KB per player** — about
+12MB for 400 — and no combination of `filterStatsFor*` reduces it. That's fine on wifi
+and a bad idea on draft day, hence the baked baseline.
+
+`X-Fantasy-Filter` is a custom header, so it triggers a CORS preflight. ESPN's OPTIONS
+response does allow it (`Access-Control-Allow-Headers: x-fantasy-filter`) and echoes the
+requesting origin, so this works from the deployed site — but it is a preflighted request,
+not a simple one.
+
+#### The delta is rank-to-rank, and the threshold is empirical
+
+`adpDelta` compares `ARANK` (this pool ordered by ADP) to `MRANK` (your order). Do **not**
+change it to compare `MRANK` against the raw ADP number: a real draft also spends picks on
+kickers, defences and players this board doesn't carry, so raw ADP skews positive down the
+board and every deep player looks like a bargain.
+
+`ADP_EDGE` is 45 because this board disagrees with ESPN a lot — median gap is ~19 places.
+Measured on the default order: a threshold of 10 colours 74% of the board, 20 colours 48%,
+45 colours roughly 15%. Every player shows a plain delta; only outliers get colour. Lower
+the threshold and the highlight stops carrying information.
 
 #### Regenerating the baked tables
 
