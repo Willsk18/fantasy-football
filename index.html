@@ -143,6 +143,18 @@
   .smsg{margin:12px 0 0;font-size:12.5px;line-height:1.5;min-height:1px}
   .smsg.bad{color:#E8735F}
   .smsg.good{color:var(--rb)}
+  .dbar{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:9px 12px;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.04em}
+  .dbar:hover{border-color:#3a4756}
+  .dbar .dnow{color:var(--ink-dim);white-space:nowrap}
+  .dbar .dyou{flex:1;min-width:0;color:var(--chalk);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dbar .dgear{color:var(--ink-faint);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+  .dbar.clock{border-color:var(--rb);background:#16281f}
+  .dbar.clock .dyou{color:var(--rb);text-transform:uppercase;letter-spacing:.1em}
+  .drow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line)}
+  .drow label{font-size:13px;color:var(--ink-dim);font-weight:600}
+  .drow select,.drow input[type=number]{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:inherit;font-size:14px;padding:7px 9px;min-width:84px;text-align:center;outline:none}
+  .drow select:focus,.drow input:focus{border-color:#48586a}
+  .drow input[type=checkbox]{width:18px;height:18px;accent-color:var(--rb);cursor:pointer}
   .vchip{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.02em;border-radius:4px;padding:1px 4px;margin-left:2px;vertical-align:1px;color:var(--ink-faint)}
   .vchip.up{color:#0F141C;background:var(--rb)}
   .vchip.down{color:#0F141C;background:var(--qb)}
@@ -191,6 +203,7 @@
       <span class="scount" id="scount"></span>
       <select id="team" class="teamsel" title="Filter by team"><option value="">All teams</option></select>
     </div>
+    <div class="dbar" id="dbar" hidden></div>
   </div>
 </header>
 
@@ -203,6 +216,7 @@
       <span class="lg"><span class="dot" style="background:var(--te)"></span>TE</span>
     </div>
     <div class="baracts">
+      <button class="reset" id="draftmodebtn" title="Track whose turn it is">Draft</button>
       <button class="reset" id="adpbtn" title="Average draft position">ADP</button>
       <button class="reset" id="syncbtn" title="Use this board on another device">Sync</button>
       <button class="reset" id="reset">Reset this board</button>
@@ -527,15 +541,21 @@ async function storeSet(k,v){
   if(HAS_WS){try{return await window.storage.set(k,v);}catch(e){}}
   try{localStorage.setItem(k,v);}catch(e){}
 }
+/* Declared above load(), which reads it. Rest of the draft code is one block
+   further down. Chunk 1: settings, pick counter and status bar only. */
+const DRAFT_DEF={on:false,teams:12,slot:1,snake:true,offset:0};
+let draftCfg=Object.assign({},DRAFT_DEF);
+
 async function load(){
   try{const r=await storeGet(KEY);if(r&&r.value)store=JSON.parse(r.value);}catch(e){}
   store.master=reconcileMaster(store.master);
   drafted=new Set(store.drafted||[]);
   tiers=(store.tiers&&!Array.isArray(store.tiers))?store.tiers:{};
+  draftCfg=Object.assign({},DRAFT_DEF,store.draft||{});
 }
 let saveTimer=null;
 function save(){
-  store.drafted=[...drafted];store.tiers=tiers;store.updatedAt=Date.now();
+  store.drafted=[...drafted];store.tiers=tiers;store.draft=draftCfg;store.updatedAt=Date.now();
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{storeSet(KEY,JSON.stringify(store));},120);
   pushRemote();
@@ -578,6 +598,7 @@ function adopt(remote){
   store.master=reconcileMaster(store.master);
   drafted=new Set(store.drafted||[]);
   tiers=(store.tiers&&!Array.isArray(store.tiers))?store.tiers:{};
+  draftCfg=Object.assign({},DRAFT_DEF,store.draft||{});
 }
 // Last write wins, compared on the updatedAt stamped into the blob by save().
 async function pullRemote(){
@@ -746,7 +767,7 @@ listEl.addEventListener("click",e=>{
     const li=btn.closest(".card");const id=li.dataset.id;
     if(drafted.has(id)){drafted.delete(id);li.classList.remove("drafted");btn.textContent="Draft";}
     else{drafted.add(id);li.classList.add("drafted");btn.textContent="Undo";}
-    save();return;
+    save();paintDraftBar();return;
   }
   if(e.target.closest(".grip"))return;
   const li=e.target.closest(".card");
@@ -1115,8 +1136,84 @@ listEl.addEventListener("touchstart",e=>{
 listEl.addEventListener("touchmove",()=>{lpMoved=true;clearTimeout(lpTimer);},{passive:true});
 listEl.addEventListener("touchend",()=>clearTimeout(lpTimer),{passive:true});
 
+/* ---------- Draft mode, chunk 1 ------------------------------------------
+   Whose turn it is, nothing more. The pick counter is derived from how many
+   players are crossed off, so the board stays the single source of truth --
+   which only holds if EVERY pick gets marked, not just yours. offset absorbs
+   the drift when you fall behind, without fake-drafting anyone to catch up. */
+function draftTeams(){const n=+draftCfg.teams;return (n>=4&&n<=20)?n:12;}
+function draftSlot(){const n=draftTeams(),s=+draftCfg.slot;return (s>=1&&s<=n)?s:1;}
+function myPicks(){
+  const n=draftTeams(),s=draftSlot(),out=[];
+  const rounds=Math.min(30,Math.max(1,Math.ceil(PLAYERS.length/n)));  // hard cap: never loop away
+  for(let r=1;r<=rounds;r++)out.push((r-1)*n+((draftCfg.snake&&r%2===0)?(n-s+1):s));
+  return out;
+}
+function pickNow(){return Math.max(1,drafted.size+1+(+draftCfg.offset||0));}
+function nextMyPick(){const p=pickNow();return myPicks().find(x=>x>=p)||null;}
+function paintDraftBar(){
+  const bar=document.getElementById("dbar");if(!bar)return;
+  if(!draftCfg.on){bar.hidden=true;bar.innerHTML="";return;}
+  const p=pickNow(),np=nextMyPick(),mine=(np===p);
+  bar.hidden=false;
+  bar.className="dbar"+(mine?" clock":"");
+  bar.innerHTML='<span class="dnow">Rd '+Math.ceil(p/draftTeams())+' &middot; Pick '+p+'</span>'
+    +'<span class="dyou">'+(np?(mine?"You’re on the clock":"You pick at "+np+" &middot; "+(np-p)+" away")
+                              :"No picks left")+'</span>'
+    +'<span class="dgear">Edit</span>';
+}
+function openDraft(){
+  modalEl.style.removeProperty("--pc");
+  const n=draftTeams();
+  let teams="",slots="";
+  for(let i=6;i<=16;i++)teams+='<option value="'+i+'"'+(i===n?" selected":"")+'>'+i+'</option>';
+  for(let i=1;i<=n;i++)slots+='<option value="'+i+'"'+(i===draftSlot()?" selected":"")+'>'+i+'</option>';
+  modalEl.innerHTML='<div class="mhead"><button class="mclose" aria-label="Close">×</button>'
+   +'<div class="mname">Draft mode</div>'
+   +'<div class="msub">'+(draftCfg.on?"On &middot; pick "+pickNow():"Off")+'</div></div>'
+   +'<div class="sync">'
+   +'<p class="snote">Tracks whose turn it is. Crossing a player off advances the counter, so mark <b>every</b> pick — not just yours.</p>'
+   +'<div class="drow"><label for="dteams">Teams</label><select id="dteams">'+teams+'</select></div>'
+   +'<div class="drow"><label for="dslot">Your slot</label><select id="dslot">'+slots+'</select></div>'
+   +'<div class="drow"><label for="dsnake">Snake order</label><input type="checkbox" id="dsnake"'+(draftCfg.snake?" checked":"")+'></div>'
+   +'<div class="drow"><label for="dpick">Current pick</label><input type="number" id="dpick" min="1" value="'+pickNow()+'"></div>'
+   +'<p class="snote">Correct <b>current pick</b> if you fall behind — it nudges the counter without fake-drafting anyone. Your turns: <b>'+myPicks().slice(0,6).join(", ")+'</b>…</p>'
+   +'<div class="syncbtns"><button class="reset" data-d="save">'+(draftCfg.on?"Update":"Start draft")+'</button>'
+   +(draftCfg.on?'<button class="reset danger" data-d="stop">End draft</button>':'')+'</div>'
+   +'<p class="smsg" id="smsg"></p></div>';
+  const dt=document.getElementById("dteams"),ds=document.getElementById("dslot");
+  if(dt&&ds)dt.addEventListener("change",()=>{
+    const k=+dt.value||12,cur=Math.min(+ds.value||1,k);let h="";
+    for(let i=1;i<=k;i++)h+='<option value="'+i+'"'+(i===cur?" selected":"")+'>'+i+'</option>';
+    ds.innerHTML=h;
+  });
+  ovl.classList.add("show");
+}
+function val(id,d){const el=document.getElementById(id);return el?el.value:d;}
+modalEl.addEventListener("click",e=>{
+  const b=e.target.closest("[data-d]");if(!b)return;
+  if(b.dataset.d==="stop"){
+    draftCfg.on=false;save();paintDraftBar();openDraft();
+    msg("Draft mode off. Your crossed-off players are untouched.","");
+    return;
+  }
+  const t=+val("dteams",12)||12;
+  const snake=document.getElementById("dsnake");
+  draftCfg.teams=t;
+  draftCfg.slot=Math.min(+val("dslot",1)||1,t);
+  draftCfg.snake=snake?!!snake.checked:true;
+  draftCfg.offset=Math.max(1,+val("dpick",1)||1)-(drafted.size+1);
+  draftCfg.on=true;
+  save();paintDraftBar();openDraft();
+  msg("Draft mode on — you’re up at pick "+nextMyPick()+".","good");
+});
+// Guarded so a missing element can never take the rest of the script with it.
+function wire(id,ev,fn){const el=document.getElementById(id);if(el)el.addEventListener(ev,fn);}
+wire("draftmodebtn","click",openDraft);
+wire("dbar","click",openDraft);
+
 (async function(){
-  await load();populateTeams();renderTabs();renderList();paintSyncBtn();
+  await load();populateTeams();renderTabs();renderList();paintSyncBtn();paintDraftBar();
   if(await pullRemote())renderAll();   // paint from local first, then correct from remote
 })();
 </script>
