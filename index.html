@@ -1197,10 +1197,21 @@ modalEl.addEventListener("click",e=>{
     // Ending a draft clears the board for the next one. Destructive and it
     // syncs, so confirm whenever there's actually something to lose.
     const n=drafted.size;
-    if(n&&!confirm("End the draft and put all "+n+" crossed-off players back on the board?"))return;
+    let ok=true;
+    // A blocked or dismissed dialog must not silently leave the board crossed
+    // off -- treat anything other than an explicit "cancel" as go.
+    if(n){try{ok=confirm("End the draft and put all "+n+" crossed-off players back on the board?");}catch(err){ok=true;}}
+    if(!ok)return;
     drafted.clear();
     draftCfg.on=false;
     draftCfg.offset=0;        // calibrated to the draft just ended; stale for the next one
+    // Clear the DOM directly rather than trusting a re-render, mirroring what
+    // the card's own Draft/Undo button does.
+    const struck=listEl.querySelectorAll(".card.drafted");
+    for(let i=0;i<struck.length;i++){
+      struck[i].classList.remove("drafted");
+      const db=struck[i].querySelector(".draftbtn");if(db)db.textContent="Draft";
+    }
     save();renderList();paintDraftBar();openDraft();
     msg(n?"Draft over — "+n+" players back on the board.":"Draft mode off.","good");
     return;
