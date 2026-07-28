@@ -773,9 +773,23 @@ listEl.addEventListener("click",e=>{
   const li=e.target.closest(".card");
   if(li)openPlayer(li.dataset.id);
 });
-document.getElementById("reset").addEventListener("click",()=>{
-  const t=TABS.find(t=>t.key===active).label;
-  if(!confirm('Reset the "'+t+'" board back to ADP order? Your custom order for this tab will be cleared.'))return;
+/* Two taps instead of confirm(). Dialogs are suppressed in at least one browser
+   this board runs in -- confirm() returns false without showing, which made
+   this button silently do nothing at all. */
+let resetArm=null;
+function disarmReset(){
+  const b=document.getElementById("reset");
+  if(resetArm){clearTimeout(resetArm);resetArm=null;}
+  if(b){b.textContent="Reset this board";b.classList.remove("danger");}
+}
+wire("reset","click",()=>{
+  const b=document.getElementById("reset");
+  if(!resetArm){
+    if(b){b.textContent="Tap again to reset";b.classList.add("danger");}
+    resetArm=setTimeout(disarmReset,4000);
+    return;
+  }
+  disarmReset();
   fillActiveOrder(defaultTabOrder(active));save();renderList();
 });
 const ovl=document.getElementById("ovl");
@@ -945,10 +959,18 @@ function orderDrift(){
   def.forEach((id,i)=>{if(MRANK[id]&&MRANK[id]!==i+1)moved++;});
   return moved;
 }
+let adpArm=false;   // inline two-step for the reorder, since confirm() is suppressed here
 function openAdp(justRefreshed){
   modalEl.style.removeProperty("--pc");
   let head="";
-  if(justRefreshed!=null){
+  if(adpArm){
+    const drift=orderDrift();
+    head='<div class="prompt"><div class="pq">Reset every tab to ADP order?</div>'
+      +'<p class="snote">'+(drift?'This moves <b>'+drift+'</b> players and discards any ordering you’ve done by hand.'
+                                 :'Your board already matches ADP order, so nothing changes.')+'</p>'
+      +'<div class="syncbtns"><button class="reset" data-adp="cancelorder">Keep my order</button>'
+      +'<button class="reset danger" data-adp="applyconfirm">Yes, reset</button></div></div>';
+  }else if(justRefreshed!=null){
     const drift=orderDrift();
     head='<div class="prompt"><div class="pq">Updated <b>'+justRefreshed+'</b> players from ESPN.</div>'
       +'<p class="snote">Your board order is untouched so far. '
@@ -971,7 +993,7 @@ function openAdp(justRefreshed){
    +'<p class="smsg" id="smsg"></p></div>';
   ovl.classList.add("show");
 }
-document.getElementById("adpbtn").addEventListener("click",openAdp);
+wire("adpbtn","click",()=>{adpArm=false;openAdp();});   // always open unarmed
 function applyAdpOrder(){
   store.master=defaultMaster();
   save();renderList();
@@ -981,10 +1003,13 @@ modalEl.addEventListener("click",async e=>{
   const act=b.dataset.adp;
   if(act==="keep"){openAdp();msg("Kept your order. ADP numbers and deltas are updated.","good");return;}
   if(act==="applynow"){applyAdpOrder();openAdp();msg("Board reordered to the new ADP.","good");return;}
-  if(act==="applyorder"){
+  if(act==="applyorder"){adpArm=true;openAdp();return;}
+  if(act==="cancelorder"){adpArm=false;openAdp();msg("Kept your order.","");return;}
+  if(act==="applyconfirm"){
+    adpArm=false;
     const drift=orderDrift();
-    if(drift&&!confirm("Reset every tab to ADP order? This moves "+drift+" players and discards any ordering you've done by hand."))return;
-    applyAdpOrder();openAdp();msg(drift?"Board reset to ADP order.":"Already in ADP order — nothing changed.","good");
+    applyAdpOrder();openAdp();
+    msg(drift?"Board reset to ADP order.":"Already in ADP order — nothing changed.","good");
     return;
   }
   if(act==="reset"){
@@ -1044,7 +1069,7 @@ modalEl.addEventListener("click",async e=>{
     msg("This device is local-only now. The shared board keeps its code.","");
   }
 });
-document.getElementById("syncbtn").addEventListener("click",openSync);
+wire("syncbtn","click",openSync);
 document.addEventListener("visibilitychange",async()=>{
   if(document.visibilityState==="visible"&&await pullRemote())renderAll();
 });
