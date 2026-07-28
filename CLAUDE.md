@@ -216,18 +216,44 @@ drift without fake-drafting players to catch up.
 `myPicks()` builds your turns from slot and league size; even rounds reverse when `snake`.
 Verified against slots 1, 3 and 12 in a 12-team league (1/24/25/48, 3/22/27/46, 12/13/36/37).
 
-#### The WAIT band is capped for a reason
+#### Availability odds
 
-`availability()` compares a player's ADP to your next pick, with one full round either side
-as the coin-flip band — ADP is an average, and a tighter band would present guesswork as
-precision. The band scales with league size.
+`pLasts(pid, pick)` models a player's draft slot as normal around his ADP and returns
+`1 - Φ((pick - adp) / σ)`. At `pick == adp` it returns exactly 50%, which is the quickest
+way to check the maths still works.
 
-The upper cap matters: without it, everyone more than three rounds out is labelled WAIT,
-which was **169 of 222 cards** in testing. Green wallpaper carries no information. Past
-three rounds the player isn't a live decision, so he gets no badge and the labelled set
-stays around 40 — the players you're actually choosing between. `gone` is never capped:
-an available player whose ADP is well past is a faller, and that's the most interesting
-signal on the board.
+**σ is measured, not invented.** `ADP_SD` holds each player's observed standard deviation
+across 3,526 real mock drafts (fantasyfootballcalculator.com, PPR 12-team). This matters
+more than it looks: at adp 40 and pick 55, σ=4 says 0% and σ=25 says 27%. A hand-picked
+constant would be deciding the answer, not informing it.
+
+Two things fell out of checking the real data, and both contradict the obvious guess:
+
+- The spread is **not** a fixed fraction of ADP. The observed σ/adp ratio falls from ~0.24
+  at the top of the board to ~0.11 deep. A flat 25% — the number I was about to hard-code —
+  would have been 2–3× too wide across most of the board.
+- The fallback for the 38 players FFC doesn't cover is therefore a least-squares line over
+  the 184 it does: `σ = 1.411 + 0.0973·adp`, mean error 2.6 picks, little bias by band.
+
+`draftCfg.vol` multiplies σ (0.7 / 1 / 1.4) so a league that drafts tighter or wilder than
+the FFC average can be calibrated. It's a visible dial rather than a buried constant
+precisely because it's the one genuinely unverifiable part of the model.
+
+**Why not Monte Carlo.** For "does he last to pick P" a simulation samples the same normal
+and answers the same question with added noise — and since the board recomputes on every
+pick, the numbers would visibly wobble between repaints. The CDF is exact and stable.
+Simulation would earn its keep on *joint* questions ("will at least one of these three
+last"), which needs sampling because the outcomes are correlated through a shared draft
+order. That's a real feature, just a different one.
+
+**Caveat worth knowing:** ADP comes from ESPN, σ from FFC, and the two disagree by a mean
+of 15.4 picks on the players they share. σ describes spread rather than location so it
+transfers reasonably, but this is a seam. If ADP and σ ever need to agree exactly, switch
+both to FFC — at the cost of live refresh, since FFC sends no CORS headers at all.
+
+Badges hide above 95%: labelling those painted **169 of 222 cards**, which is wallpaper.
+Long shots are never hidden — an available player already past his ADP is a faller, and
+that's the most valuable read on the board.
 
 #### Phones can't use the card's Draft button
 
