@@ -6,7 +6,7 @@
   :root{
     --bg:#0F141C; --panel:#161D28; --panel-2:#1C2632; --line:#27323F;
     --ink:#EDF1F5; --ink-dim:#8C9AAB; --ink-faint:#5C6B7C; --chalk:#F4F6F8;
-    --qb:#F2B53B; --rb:#46D88A; --wr:#46B6F2; --te:#C58CFF;
+    --qb:#F2B53B; --rb:#46D88A; --wr:#46B6F2; --te:#C58CFF; --k:#8FA3B8; --dst:#E0885F;
     --shadow:0 18px 40px rgba(0,0,0,.45); --r:12px;
   }
   *{box-sizing:border-box}
@@ -247,7 +247,7 @@
 <div class="ctx" id="ctx"></div>
 
 <script>
-const POS_COLOR = {QB:"var(--qb)",RB:"var(--rb)",WR:"var(--wr)",TE:"var(--te)"};
+const POS_COLOR = {QB:"var(--qb)",RB:"var(--rb)",WR:"var(--wr)",TE:"var(--te)",K:"var(--k)",DST:"var(--dst)"};
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
 
 /* Source: "Jake's Ranks" + "OVR & VORP Ranks" tabs (2026 proj, VORP). 2025 actuals
@@ -475,6 +475,67 @@ const PLAYERS = [
 {name:"Troy Franklin",team:"DEN",pos:"WR",bye:10,posrk:88,ovr:220,fps:66.4,auc:0,vorp:-22.7,g25:17,stats:[["Targets","49","104"],["Rec","30","65"],["Rec Yds","349","709"],["Rec TD","2.7","6"]]},
 {name:"Chris Brazzell",team:"CAR",pos:"WR",bye:5,posrk:89,ovr:221,fps:60.7,auc:0,vorp:-28.4,g25:null,stats:[["Targets","48",""],["Rec","26",""],["Rec Yds","328",""],["Rec TD","2.5",""]]},
 {name:"Tre' Harris",team:"LAC",pos:"WR",bye:7,posrk:90,ovr:222,fps:61.1,auc:0,vorp:-28.0,g25:17,stats:[["Targets","49","43"],["Rec","30","30"],["Rec Yds","358","324"],["Rec TD","1.7","1"]]}
+/* Kickers and defences. No projections -- they are here so every pick in the
+   draft can be crossed off, which is what keeps pickNow() honest. Before this
+   a leaguemate taking a kicker was unrecordable and the counter silently drifted. */
+{name:"Brandon Aubrey",team:"DAL",pos:"K",bye:14,posrk:1,ovr:223,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Broncos",team:"DEN",pos:"DST",bye:10,posrk:1,ovr:224,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Texans",team:"HOU",pos:"DST",bye:8,posrk:2,ovr:225,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Rams",team:"LAR",pos:"DST",bye:11,posrk:3,ovr:226,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Seahawks",team:"SEA",pos:"DST",bye:11,posrk:4,ovr:227,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Cameron Dicker",team:"LAC",pos:"K",bye:7,posrk:2,ovr:228,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Steelers",team:"PIT",pos:"DST",bye:9,posrk:5,ovr:229,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Ravens",team:"BAL",pos:"DST",bye:13,posrk:6,ovr:230,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Ka'imi Fairbairn",team:"HOU",pos:"K",bye:8,posrk:3,ovr:231,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Eagles",team:"PHI",pos:"DST",bye:10,posrk:7,ovr:232,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Cam Little",team:"JAX",pos:"K",bye:7,posrk:4,ovr:233,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Patriots",team:"NE",pos:"DST",bye:11,posrk:8,ovr:234,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Eddy Pineiro",team:"SF",pos:"K",bye:8,posrk:5,ovr:235,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Harrison Butker",team:"KC",pos:"K",bye:5,posrk:6,ovr:236,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Lions",team:"DET",pos:"DST",bye:6,posrk:9,ovr:237,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Browns",team:"CLE",pos:"DST",bye:11,posrk:10,ovr:238,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Chiefs",team:"KC",pos:"DST",bye:5,posrk:11,ovr:239,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Chargers",team:"LAC",pos:"DST",bye:7,posrk:12,ovr:240,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Tyler Loop",team:"BAL",pos:"K",bye:13,posrk:7,ovr:241,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Chris Boswell",team:"PIT",pos:"K",bye:9,posrk:8,ovr:242,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Jaguars",team:"JAX",pos:"DST",bye:7,posrk:13,ovr:243,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Will Reichard",team:"MIN",pos:"K",bye:6,posrk:9,ovr:244,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Cairo Santos",team:"CHI",pos:"K",bye:10,posrk:10,ovr:245,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Cowboys",team:"DAL",pos:"DST",bye:14,posrk:14,ovr:246,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Packers",team:"GB",pos:"DST",bye:11,posrk:15,ovr:247,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Vikings",team:"MIN",pos:"DST",bye:6,posrk:16,ovr:248,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"49ers",team:"SF",pos:"DST",bye:8,posrk:17,ovr:249,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Buccaneers",team:"TB",pos:"DST",bye:10,posrk:18,ovr:250,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Evan McPherson",team:"CIN",pos:"K",bye:6,posrk:11,ovr:251,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Jake Elliott",team:"PHI",pos:"K",bye:10,posrk:12,ovr:252,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Bills",team:"BUF",pos:"DST",bye:7,posrk:19,ovr:253,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Giants",team:"NYG",pos:"DST",bye:8,posrk:20,ovr:254,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Bears",team:"CHI",pos:"DST",bye:10,posrk:21,ovr:255,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Matt Gay",team:"WSH",pos:"K",bye:7,posrk:13,ovr:256,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Dolphins",team:"MIA",pos:"DST",bye:6,posrk:22,ovr:257,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Bengals",team:"CIN",pos:"DST",bye:6,posrk:23,ovr:258,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Raiders",team:"LV",pos:"DST",bye:13,posrk:24,ovr:259,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Panthers",team:"CAR",pos:"DST",bye:5,posrk:25,ovr:260,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Commanders",team:"WSH",pos:"DST",bye:7,posrk:26,ovr:261,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Tyler Bass",team:"BUF",pos:"K",bye:7,posrk:14,ovr:262,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Jason Sanders",team:"MIA",pos:"K",bye:6,posrk:15,ovr:263,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Ryan Fitzgerald",team:"CAR",pos:"K",bye:5,posrk:16,ovr:264,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Cardinals",team:"ARI",pos:"DST",bye:14,posrk:27,ovr:265,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Titans",team:"TEN",pos:"DST",bye:9,posrk:28,ovr:266,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Falcons",team:"ATL",pos:"DST",bye:11,posrk:29,ovr:267,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Andre Szmyt",team:"CLE",pos:"K",bye:11,posrk:17,ovr:268,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Jake Moody",team:"CHI",pos:"K",bye:10,posrk:18,ovr:269,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Ben Sauls",team:"NYG",pos:"K",bye:8,posrk:19,ovr:270,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Chad Ryland",team:"ARI",pos:"K",bye:14,posrk:20,ovr:271,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Nick Folk",team:"NYJ",pos:"K",bye:13,posrk:21,ovr:272,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Jets",team:"NYJ",pos:"DST",bye:13,posrk:30,ovr:273,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Zane Gonzalez",team:"ATL",pos:"K",bye:11,posrk:22,ovr:274,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Joey Slye",team:"TEN",pos:"K",bye:9,posrk:23,ovr:275,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Saints",team:"NO",pos:"DST",bye:8,posrk:31,ovr:276,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Andy Borregales",team:"NE",pos:"K",bye:11,posrk:24,ovr:277,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Wil Lutz",team:"DEN",pos:"K",bye:10,posrk:25,ovr:278,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Blake Grupe",team:"NO",pos:"K",bye:8,posrk:26,ovr:279,fps:null,auc:null,vorp:null,g25:null,stats:[]},
+{name:"Colts",team:"IND",pos:"DST",bye:13,posrk:32,ovr:280,fps:null,auc:null,vorp:null,g25:null,stats:[]},
 ].map(p=>({...p,id:slug(p.name)+"-"+p.team.toLowerCase()}));
 const BY_ID = Object.fromEntries(PLAYERS.map(p=>[p.id,p]));
 
@@ -507,12 +568,13 @@ const ADP_SD_ASOF="2026-07-28";
    values where FFC ranks the player (real spread, 121.9-188.6) and with
    synthetic ranks past 190 for the 34 it never sees, which go undrafted in
    practice. Applied at lookup time so a live ESPN refresh cannot undo it. */
+const ADP_KD={"brandon-aubrey-dal":85.2,"broncos-den":89.9,"texans-hou":91.4,"rams-lar":98.2,"seahawks-sea":106.2,"cameron-dicker-lac":110.3,"steelers-pit":118.2,"ravens-bal":134.8,"ka-imi-fairbairn-hou":134.9,"eagles-phi":135.7,"cam-little-jax":137.4,"patriots-ne":145.4,"eddy-pineiro-sf":150.3,"harrison-butker-kc":151.0,"lions-det":151.5,"browns-cle":151.6,"chiefs-kc":160.7,"chargers-lac":161.2,"tyler-loop-bal":161.9,"chris-boswell-pit":162.3,"jaguars-jax":164.6,"will-reichard-min":174.0,"cairo-santos-chi":180.0,"cowboys-dal":186.0,"packers-gb":192.0,"vikings-min":212.5,"49ers-sf":213.0,"buccaneers-tb":213.5,"evan-mcpherson-cin":214.0,"jake-elliott-phi":214.5,"bills-buf":215.0,"giants-nyg":215.5,"bears-chi":216.0,"matt-gay-wsh":216.5,"dolphins-mia":217.0,"bengals-cin":217.5,"raiders-lv":218.0,"panthers-car":218.5,"commanders-wsh":219.0,"tyler-bass-buf":219.5,"jason-sanders-mia":220.0,"ryan-fitzgerald-car":220.5,"cardinals-ari":221.0,"titans-ten":221.5,"falcons-atl":222.0,"andre-szmyt-cle":222.5,"jake-moody-chi":223.0,"ben-sauls-nyg":223.5,"chad-ryland-ari":224.0,"nick-folk-nyj":224.5,"jets-nyj":225.0,"zane-gonzalez-atl":225.5,"joey-slye-ten":226.0,"saints-no":226.5,"andy-borregales-ne":227.0,"wil-lutz-den":227.5,"blake-grupe-no":228.0,"colts-ind":228.5};
 const ADP_TAIL=165;
 const ADP_TAILFIX={"aaron-rodgers-pit":188.6,"adonai-mitchell-nyj":158.1,"andrei-iosivas-cin":195.5,"antonio-williams-wsh":151.8,"braelon-allen-nyj":173.1,"brandon-aiyuk-":147.0,"brenton-strange-jax":146.1,"brian-robinson-atl":156.9,"bryce-young-car":163.6,"c-j-stroud-hou":147.9,"caleb-douglas-mia":199.0,"calvin-ridley-ten":156.7,"cam-ward-ten":167.6,"chig-okonkwo-wsh":165.1,"chris-bell-mia":203.0,"chris-brazzell-car":201.0,"chris-brooks-gb":197.0,"chris-rodriguez-jax":151.1,"cooper-kupp-sea":167.6,"dalton-schultz-hou":182.3,"darnell-mooney-nyg":194.5,"david-njoku-lac":194.0,"deebo-samuel-":191.5,"demond-claiborne-min":196.5,"denzel-boston-cle":136.8,"dylan-sampson-cle":157.5,"emanuel-wilson-sea":205.5,"emmett-johnson-kc":192.0,"geno-smith-nyj":200.0,"germie-bernard-pit":162.3,"greg-dulcich-mia":170.0,"isaac-teslaa-det":169.6,"jack-bech-lv":206.5,"jacoby-brissett-ari":195.0,"jalen-mcmillan-tb":138.9,"jalen-nailor-lv":146.5,"jauan-jennings-min":133.7,"jaydon-blue-dal":137.2,"jaylen-wright-mia":197.5,"jaylin-noel-hou":206.0,"jonah-coleman-den":167.7,"jordan-james-sf":202.0,"justice-hill-bal":152.6,"kaelon-black-sf":198.5,"kayshon-boutte-ne":204.0,"kaytron-allen-wsh":196.0,"keaton-mitchell-lac":160.2,"kimani-vidal-lac":201.5,"kirk-cousins-lv":193.0,"malik-washington-mia":156.5,"malik-willis-mia":165.7,"marshawn-lloyd-gb":122.6,"mike-washington-lv":148.9,"nicholas-singleton-ten":193.5,"ollie-gordon-mia":200.5,"omar-cooper-nyj":130.7,"pat-freiermuth-pit":190.0,"rashod-bateman-bal":160.2,"ray-davis-buf":204.5,"ryan-flournoy-dal":162.2,"samaje-perine-cin":159.8,"sean-tucker-tb":199.5,"shedeur-sanders-cle":191.0,"tank-bigsby-phi":166.6,"tank-dell-hou":164.2,"tre-harris-lac":203.5,"tre-tucker-lv":136.6,"trey-benson-ari":198.0,"troy-franklin-den":171.3,"tua-tagovailoa-atl":205.0,"ty-johnson-buf":202.5,"tyjae-spears-ten":121.9,"tyler-allgeier-ari":162.3,"tyquan-thornton-kc":192.5,"tyreek-hill-":190.5,"tyrone-tracy-nyg":156.5,"zachariah-branch-atl":173.9};
 
 const ADP_SD={"jaxon-smith-njigba-sea":1.7,"ja-marr-chase-cin":1.2,"puka-nacua-lar":0.7,"amon-ra-st-brown-det":1.5,"bijan-robinson-atl":0.8,"jahmyr-gibbs-det":0.8,"christian-mccaffrey-sf":1.1,"drake-london-atl":2.1,"george-pickens-dal":3.2,"jonathan-taylor-ind":1.7,"ceedee-lamb-dal":2.4,"justin-jefferson-min":2.6,"a-j-brown-ne":2.6,"nico-collins-hou":3.1,"tee-higgins-cin":3.9,"de-von-achane-mia":1.6,"tetairoa-mcmillan-car":3.4,"zay-flowers-bal":4.1,"james-cook-buf":2.6,"josh-allen-buf":6.7,"terry-mclaurin-wsh":4.3,"devonta-smith-phi":3.4,"rashee-rice-kc":3.9,"jaylen-waddle-den":4.2,"ladd-mcconkey-lac":4.4,"luther-burden-chi":5.8,"derrick-henry-bal":2.5,"chase-brown-cin":2.9,"chris-olave-no":3.5,"emeka-egbuka-tb":5.2,"davante-adams-lar":4.3,"garrett-wilson-nyj":3.3,"dj-moore-buf":9.4,"ashton-jeanty-lv":2.3,"omarion-hampton-lac":2.9,"mike-evans-sf":5.5,"carnell-tate-ten":7.2,"kenneth-walker-kc":3.0,"jameson-williams-det":5.5,"breece-hall-nyj":3.6,"kyren-williams-lar":4.2,"saquon-barkley-phi":3.3,"cam-skattebo-nyg":5.1,"josh-jacobs-gb":3.5,"marvin-harrison-ari":9.4,"makai-lemon-phi":11.7,"javonte-williams-dal":4.4,"rome-odunze-chi":6.4,"travis-etienne-no":5.3,"jeremiyah-love-ari":2.2,"alec-pierce-ind":8.8,"parker-washington-jax":8.1,"courtland-sutton-den":7.7,"christian-watson-gb":6.5,"jordan-addison-min":10.0,"drake-maye-ne":6.6,"jordyn-tyson-no":9.8,"dk-metcalf-pit":7.0,"michael-pittman-pit":7.4,"malik-nabers-nyg":7.5,"lamar-jackson-bal":8.2,"david-montgomery-hou":5.7,"ricky-pearsall-sf":8.6,"treveyon-henderson-ne":6.3,"jakobi-meyers-jax":8.6,"quinshon-judkins-cle":5.3,"rhamondre-stevenson-ne":6.4,"wan-dale-robinson-ten":10.6,"jayden-reed-gb":7.7,"jadarian-price-sea":8.5,"josh-downs-ind":9.0,"quentin-johnston-lac":10.0,"tony-pollard-ten":8.8,"colston-loveland-chi":5.5,"d-andre-swift-chi":4.4,"chris-godwin-tb":7.5,"jayden-higgins-hou":9.4,"brock-bowers-lv":5.8,"xavier-worthy-kc":8.0,"joe-burrow-cin":7.9,"chuba-hubbard-car":9.1,"brian-thomas-jax":7.9,"bhayshul-tuten-jax":6.6,"michael-wilson-ari":7.8,"rico-dowdle-pit":6.5,"rj-harvey-den":13.5,"jaylen-warren-pit":5.4,"trey-mcbride-ari":4.9,"romeo-doubs-ne":7.5,"bucky-irving-tb":5.3,"omar-cooper-nyj":13.8,"jalen-hurts-phi":15.3,"matthew-golden-gb":7.8,"jalen-coker-car":9.8,"khalil-shakir-buf":8.6,"tyler-warren-ind":6.3,"kyle-monangai-chi":13.6,"jayden-daniels-wsh":12.7,"aaron-jones-min":12.3,"rashid-shaheed-sea":7.8,"jalen-nailor-lv":13.7,"sam-laporta-det":9.4,"dak-prescott-dal":8.1,"brock-purdy-sf":16.7,"harold-fannin-cle":7.8,"blake-corum-lar":14.2,"jordan-mason-min":13.8,"caleb-williams-chi":14.8,"tucker-kraft-gb":8.2,"antonio-williams-wsh":13.3,"trevor-lawrence-jax":10.7,"calvin-ridley-ten":11.6,"patrick-mahomes-kc":17.6,"jaxson-dart-nyg":11.6,"adonai-mitchell-nyj":16.2,"travis-kelce-kc":17.7,"rachaad-white-wsh":12.3,"jacory-croskey-merritt-wsh":13.5,"kc-concepcion-cle":8.8,"denzel-boston-cle":6.7,"chris-rodriguez-jax":16.3,"isaiah-likely-nyg":18.8,"j-k-dobbins-den":11.1,"jonathon-brooks-car":16.5,"george-kittle-sf":17.5,"jerry-jeudy-cle":13.8,"kyle-pitts-atl":14.0,"jalen-mcmillan-tb":12.5,"bo-nix-den":10.9,"jared-goff-det":14.1,"germie-bernard-pit":11.6,"tre-tucker-lv":7.6,"matthew-stafford-lar":13.2,"ryan-flournoy-dal":13.9,"justin-herbert-lac":11.1,"malik-washington-mia":17.5,"jake-ferguson-dal":18.1,"dalton-kincaid-buf":15.9,"mark-andrews-bal":16.9,"brenton-strange-jax":18.0,"kyler-murray-min":14.2,"dallas-goedert-phi":15.6,"t-j-hockenson-min":20.2,"baker-mayfield-tb":11.3,"hunter-henry-ne":14.5,"malik-willis-mia":14.7,"greg-dulcich-mia":17.2,"tyler-shough-no":13.2,"chig-okonkwo-wsh":15.9,"jordan-love-gb":7.1,"dalton-schultz-hou":10.5,"c-j-stroud-hou":10.9,"kenyon-sadiq-nyj":15.5,"cam-ward-ten":15.0,"daniel-jones-ind":11.2,"juwan-johnson-no":11.8,"sam-darnold-sea":15.2,"bryce-young-car":26.0,"aaron-rodgers-pit":17.1,"isiah-pacheco-det":19.3,"alvin-kamara-no":20.2,"tyrone-tracy-nyg":17.9,"dylan-sampson-cle":16.7,"tyler-allgeier-ari":22.8,"woody-marks-hou":22.8,"brian-robinson-atl":17.7,"justice-hill-bal":26.7,"braelon-allen-nyj":31.8,"tyjae-spears-ten":13.1,"tank-bigsby-phi":8.6,"mike-washington-lv":45.6,"jonah-coleman-den":10.0,"keaton-mitchell-lac":31.1,"jaydon-blue-dal":28.6,"samaje-perine-cin":14.0,"brandon-aiyuk-":12.5,"marshawn-lloyd-gb":31.9,"jauan-jennings-min":11.7,"isaac-teslaa-det":13.3,"rashod-bateman-bal":17.8,"zachariah-branch-atl":6.3,"cooper-kupp-sea":14.1,"tank-dell-hou":24.3,"troy-franklin-den":7.9};
 
-const TABS=[{key:"overall",label:"Overall"},{key:"qb",label:"QB"},{key:"rb",label:"RB"},{key:"wr",label:"WR"},{key:"te",label:"TE"},{key:"flex",label:"Flex"}];
+const TABS=[{key:"overall",label:"Overall"},{key:"qb",label:"QB"},{key:"rb",label:"RB"},{key:"wr",label:"WR"},{key:"te",label:"TE"},{key:"flex",label:"Flex"},{key:"k",label:"K"},{key:"dst",label:"DST"}];
 const FLEX=new Set(["RB","WR","TE"]);
 
 const KEY="ff2026:board:v4";
@@ -538,7 +600,7 @@ let adpLive=null;
 try{const _a=localStorage.getItem(ADP_KEY);if(_a)adpLive=JSON.parse(_a);}catch(e){}
 function adpOf(pid){
   const live=(adpLive&&adpLive.map)?adpLive.map[pid]:null;
-  const e=(live!=null)?live:ADP[pid];
+  const e=(live!=null)?live:(ADP[pid]!=null?ADP[pid]:ADP_KD[pid]);
   if(e==null)return null;
   // Past ADP_TAIL the ESPN scale has stopped resolving; prefer the repaired value.
   return (e>=ADP_TAIL&&ADP_TAILFIX[pid]!=null)?ADP_TAILFIX[pid]:e;
@@ -914,10 +976,18 @@ function schedTable(p){
 function overviewBody(p){
   const a=adpOf(p.id),d=adpDelta(p.id);
   const adpTile=a==null?"—":a.toFixed(1)+(!d?"":' <span class="tdelta'+(Math.abs(d)>=ADP_EDGE?(d>0?" up":" down"):"")+'">'+(d>0?"+":"")+d+'</span>');
-  const tiles=[["Proj Pts",p.fps],["VORP",fmtVorp(p.vorp)],["Auction","$"+p.auc],["ADP vs You",adpTile]];
+  // Kickers and defences carry no projections, so guard every tile that would
+  // otherwise print "null" or "$null".
+  const isKD=(p.pos==="K"||p.pos==="DST");
+  const tiles=isKD
+    ? [["ADP vs You",adpTile],["Bye",p.bye||"—"]]
+    : [["Proj Pts",p.fps==null?"—":p.fps],["VORP",fmtVorp(p.vorp)],
+       ["Auction",p.auc==null?"—":"$"+p.auc],["ADP vs You",adpTile]];
   const has=p.g25!=null;
   let body;
-  if(has){
+  if(isKD){
+    body='<div class="note">No projections carried for kickers and defences. They’re on the board so every pick can be crossed off, which is what keeps the pick counter honest.</div>';
+  }else if(has){
     body='<div class="cmphead"><span class="k"></span><span class="c">2026 Proj</span><span class="c">2025 ('+p.g25+'g)</span></div>'
       +p.stats.map(s=>'<div class="crow"><span class="k">'+s[0]+'</span><span class="c">'+s[1]+'</span><span class="c">'+(s[2]===""?"\u2014":s[2])+'</span></div>').join("");
   }else{
@@ -926,7 +996,7 @@ function overviewBody(p){
   }
   return '<div class="tiles">'+tiles.map(t=>'<div class="tile"><div class="v">'+t[1]+'</div><div class="k">'+t[0]+'</div></div>').join("")+'</div>'
     +oddsBlock(p)
-    +'<div class="mproj"><h4>'+(has?'2026 Projected vs 2025 Actual':'2026 Projected Stats')+'</h4>'+body+'</div>';
+    +'<div class="mproj">'+(isKD?"":'<h4>'+(has?'2026 Projected vs 2025 Actual':'2026 Projected Stats')+'</h4>')+body+'</div>';
 }
 const PTABS=[["overview","Overview"],["log","2025 Log"],["sched","2026 Sched"]];
 let curP=null,curPT="overview";
@@ -937,7 +1007,8 @@ function paintPlayer(){
     '<div class="mhead"><button class="mclose" aria-label="Close">\u00d7</button>'
     +'<div class="mname">'+p.name+'</div>'
     +'<div class="msub">'+p.pos+p.posrk+' &middot; '+teamBit+' &middot; Overall '+p.ovr+'</div>'
-    +'<div class="ptabs">'+PTABS.map(t=>'<button class="ptab'+(t[0]===curPT?" on":"")+'" data-pt="'+t[0]+'">'+t[1]+'</button>').join("")+'</div></div>'
+    +'<div class="ptabs">'+PTABS.filter(t=>t[0]!=="log"||!(p.pos==="K"||p.pos==="DST"))
+        .map(t=>'<button class="ptab'+(t[0]===curPT?" on":"")+'" data-pt="'+t[0]+'">'+t[1]+'</button>').join("")+'</div></div>'
     // Phones hide the card's own Draft button entirely, so this is the only
     // cross-off control that works on the device you draft from.
     +'<div class="dact"><button class="reset'+(drafted.has(p.id)?" danger":"")+'" data-draftp="1">'
