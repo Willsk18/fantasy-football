@@ -855,21 +855,26 @@ function pLastsRaw(pid,pick){
    ADP magnitude, the whole scale-calibration problem stops mattering; only
    relative order and spread do.
 
-   MC_PHANTOMS are picks that go to nobody on this board. Their positions are
-   measured, not guessed: counting how many pool players sit below each pick
-   shows the board running short by 2 at pick 20, 5 at 60 and 11 at 100 before
-   catching up. Uniform phantoms put only 0.3 of them in the picks 28-46 window
-   when it needs 2, which made the simulation reach far deeper than a real
-   draft does -- 4.5 of those 18 picks went to ADP 46-60 -- and so understated
-   everyone still on the board. Past ~120 the pool is over-supplied instead, and
-   that needs no correction: surplus players simply rank last and go undrafted.
+   There are no phantom picks, and there shouldn't be: ten picks take ten real
+   players. An earlier version inserted them to close an apparent shortfall --
+   fewer players carrying an ADP below pick K than K-1. That shortfall is real
+   but it is NOT missing players. Checked directly, exactly one player with ADP
+   under 120 is absent from this board (Travis Hunter); and ESPN's own complete
+   368-player universe shows the same shortfall, -10 by pick 80 and -14 by 100.
+   It is a property of how ESPN averages ADP: the scale is stretched by roughly
+   7% against real pick numbers.
+
+   That is precisely why simulating beats the closed form. Assigning picks by
+   RANK absorbs a stretched scale automatically -- a player listed at ADP 50
+   who truly goes around pick 46 gets drafted in that window because he ranks
+   there, not because his number says so. Phantoms "fixed" the stretch by
+   pretending the board was incomplete, which double-counted the correction.
 
    Seeded on the board state, so a given position always yields the same
    numbers -- no wobble between repaints, which was the original objection
    to simulating at all. One run scores every player at once, so the cost is
    per pick, not per card.                                                  */
 const MC_SIMS=1500;
-const MC_PHANTOMS=[8,14,16,34,37,55,59,63,64,65,81,82,83,85];
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 let mcCache=null;
 function mcKey(){return draftCfg.on?(pickNow()+"|"+drafted.size+"|"+draftCfg.teams+"|"+draftCfg.slot+"|"+draftCfg.snake+"|"+draftCfg.vol+"|"+(adpLive?adpLive.asof:"base")):"off";}
@@ -886,28 +891,19 @@ function mcRun(){
   const hits={};pool.forEach(p=>{hits[p.id]=[0,0,0];});
   if(!targets.length||!pool.length){mcCache={key:key,targets:targets,p:{},n:0};return mcCache;}
   const rnd=mulberry32(1013904223^(now*2654435761));
-  // phantoms already behind us are baked into the offset the user set
-  const ph=MC_PHANTOMS.filter(x=>x>=now);
-  const np=pool.length,nAll=np+ph.length;
-  const score=new Float64Array(nAll),order=new Array(nAll);
+  const np=pool.length;
+  const score=new Float64Array(np),order=new Array(np);
   const cmp=(x,y)=>score[x]-score[y];
   const nt=targets.length;
   for(let s=0;s<MC_SIMS;s++){
     for(let i=0;i<np;i++){
       let u=rnd();if(u<1e-12)u=1e-12;
       score[i]=pool[i].a+pool[i].s*Math.sqrt(-2*Math.log(u))*Math.cos(6.283185307179586*rnd());
+      order[i]=i;
     }
-    // phantoms consume a pick without being anyone on this board
-    for(let j=0;j<ph.length;j++){
-      let u=rnd();if(u<1e-12)u=1e-12;
-      score[np+j]=ph[j]+8*Math.sqrt(-2*Math.log(u))*Math.cos(6.283185307179586*rnd());
-    }
-    for(let i=0;i<nAll;i++)order[i]=i;
     order.sort(cmp);
-    for(let r=0;r<nAll;r++){
-      const pi=order[r];
-      if(pi>=np)continue;                   // phantom: burns the slot, scores nothing
-      const at=now+r,h=hits[pool[pi].id];    // rank r means he goes at pick now+r
+    for(let r=0;r<np;r++){
+      const at=now+r,h=hits[pool[order[r]].id];   // rank r means he goes at pick now+r
       for(let t=0;t<nt;t++) if(at>=targets[t])h[t]++;
     }
   }
