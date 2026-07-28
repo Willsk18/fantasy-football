@@ -148,6 +148,27 @@ response does allow it (`Access-Control-Allow-Headers: x-fantasy-filter`) and ec
 requesting origin, so this works from the deployed site — but it is a preflighted request,
 not a simple one.
 
+#### ADP is the default board order
+
+`defaultMaster` and `defaultTabOrder` both sort by `byAdp` — ADP ascending, `ovr` breaking
+ties. This replaced the previous `ovr` / `posrk` ordering, so position tabs are ADP-ordered
+too rather than following `posrk`.
+
+Players ESPN doesn't rank fall back to their `ovr` value as a sort key. That works because
+`ovr` runs 1–222 while ADP tops out near 171, so they sort below everyone — which matches
+where their own `ovr` (210, 215) already placed them. It is a scale coincidence, not a
+principle; if the ADP scale ever exceeds 222 this silently reshuffles them into the middle.
+
+The ADP accessors (`ADP_KEY`, `adpLive`, `adpOf`) are declared **above** `defaultMaster` on
+purpose — `defaultMaster()` runs inside `load()` and would hit a TDZ error on the `let` if
+they stayed where the rest of the ADP code lives.
+
+Changing the default does **not** touch an existing saved board: `reconcileMaster` keeps
+saved ids in their saved order. Adopting a new baseline is always an explicit action —
+"Reset board to ADP order" in the ADP panel, which replaces `master` wholesale, or the
+per-tab Reset button. A successful refresh never reorders on its own; it shows how many
+players *would* move (`orderDrift`) and makes you choose.
+
 #### The delta is rank-to-rank, and the threshold is empirical
 
 `adpDelta` compares `ARANK` (this pool ordered by ADP) to `MRANK` (your order). Do **not**

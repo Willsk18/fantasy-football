@@ -149,6 +149,9 @@
   .tiles .tdelta{font-size:12px;font-weight:800;border-radius:4px;padding:1px 4px;margin-left:2px;vertical-align:2px;color:var(--ink-faint)}
   .tiles .tdelta.up{color:#0F141C;background:var(--rb)}
   .tiles .tdelta.down{color:#0F141C;background:var(--qb)}
+  .prompt{background:var(--panel-2);border:1px solid #3a4756;border-radius:10px;padding:14px 14px 12px;margin-bottom:16px}
+  .prompt .pq{font-size:14.5px;font-weight:800;color:var(--chalk);margin-bottom:5px}
+  .prompt .snote{margin:0 0 12px;font-size:12.5px}
   .ptabs{display:flex;gap:3px;margin:14px -2px -16px;padding-top:2px}
   .ptab{appearance:none;border:0;background:transparent;cursor:pointer;font:inherit;font-weight:700;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);padding:9px 10px 11px;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s}
   .ptab:hover{color:var(--ink-dim)}
@@ -206,7 +209,7 @@
     </div>
   </div>
   <ul id="list"></ul>
-  <p class="hint"><b>Drag the grip</b> to reorder. <b>Tap a player</b> to see his 2026 projections next to his 2025 actual stats, plus VORP. <b>Search</b> to find a player fast (press / to jump to it, Esc to clear). Tap <b>Draft</b> to cross a player off. On the position tabs, <b>right-click</b> (or long-press) a player to add a tier break; drag a break by its grip to move it, or hit its × to remove it. All tabs share one ranking, so moving a player in any tab updates his spot everywhere, and changes save automatically. Starting order: position tabs use the consensus positional ranks; Overall and Flex use auction value, with positional rank breaking ties.</p>
+  <p class="hint"><b>Drag the grip</b> to reorder. <b>Tap a player</b> to see his 2026 projections next to his 2025 actual stats, plus VORP. <b>Search</b> to find a player fast (press / to jump to it, Esc to clear). Tap <b>Draft</b> to cross a player off. On the position tabs, <b>right-click</b> (or long-press) a player to add a tier break; drag a break by its grip to move it, or hit its × to remove it. All tabs share one ranking, so moving a player in any tab updates his spot everywhere, and changes save automatically. Starting order on every tab is <b>ESPN ADP</b> — tap <b>ADP</b> to refresh it from ESPN or snap the board back to it.</p>
 </main>
 
 <div class="ovl" id="ovl"><div class="modal" id="modal"></div></div>
@@ -480,13 +483,29 @@ function inTab(p,tab){
   return p.pos===tab.toUpperCase();
 }
 function tabIds(tab){return store.master.filter(id=>inTab(BY_ID[id],tab));}
-function defaultMaster(){return PLAYERS.slice().sort((a,b)=>a.ovr-b.ovr).map(p=>p.id);}
+/* ADP accessors live up here, above defaultMaster, because the default board
+   order is now built from ADP -- defaultMaster() runs during load(). */
+const ADP_KEY="ff2026:adp";
+let adpLive=null;
+try{const _a=localStorage.getItem(ADP_KEY);if(_a)adpLive=JSON.parse(_a);}catch(e){}
+function adpOf(pid){
+  if(adpLive&&adpLive.map&&adpLive.map[pid]!=null)return adpLive.map[pid];
+  return ADP[pid]==null?null:ADP[pid];
+}
+function adpAsOf(){return (adpLive&&adpLive.asof)||ADP_ASOF;}
+function adpCount(){return Object.keys((adpLive&&adpLive.map)||ADP).length;}
+/* Consensus ADP is the starting order on every tab. The two players ESPN
+   doesn't rank fall back to the board's own overall value, which is above
+   the top of the ADP scale and so parks them at the bottom -- which is
+   roughly where their own ovr already had them. */
+function adpSortKey(p){const a=adpOf(p.id);return a==null?p.ovr:a;}
+function byAdp(a,b){return adpSortKey(a)-adpSortKey(b)||a.ovr-b.ovr;}
+function defaultMaster(){return PLAYERS.slice().sort(byAdp).map(p=>p.id);}
 function defaultTabOrder(tab){
   let pool=PLAYERS.slice();
-  if(tab==="flex"){pool=pool.filter(p=>FLEX.has(p.pos));pool.sort((a,b)=>a.ovr-b.ovr);}
-  else if(tab==="overall"){pool.sort((a,b)=>a.ovr-b.ovr);}
-  else{pool=pool.filter(p=>p.pos===tab.toUpperCase());pool.sort((a,b)=>a.posrk-b.posrk);}
-  return pool.map(p=>p.id);
+  if(tab==="flex")pool=pool.filter(p=>FLEX.has(p.pos));
+  else if(tab!=="overall")pool=pool.filter(p=>p.pos===tab.toUpperCase());
+  return pool.sort(byAdp).map(p=>p.id);
 }
 // Write a new order for the active tab's members back into their slots in master,
 // leaving players not shown in this tab exactly where they are.
@@ -606,25 +625,12 @@ function renderTabs(){
     tabsEl.appendChild(b);
   });
 }
-/* ---------- ADP ----------------------------------------------------
-   ADP is an overall draft position, so the delta is always measured
-   against a player's slot in master (his overall rank), never against
-   the row number of whichever tab you happen to be looking at.      */
-const ADP_KEY="ff2026:adp";
 const ADP_URL="https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leaguedefaults/3?view=kona_player_info";
 const ADP_FILTER='{"players":{"limit":400,"sortDraftRanks":{"sortPriority":100,"sortAsc":true,"value":"PPR"}}}';
 /* This board disagrees with ESPN consensus a lot -- median gap is ~19 places --
    so every player gets a delta but only real outliers get colour. At 45 that is
    about 15% of the pool; drop it and the highlight stops meaning anything. */
 const ADP_EDGE=45;
-let adpLive=null;
-try{const _a=localStorage.getItem(ADP_KEY);if(_a)adpLive=JSON.parse(_a);}catch(e){}
-function adpOf(pid){
-  if(adpLive&&adpLive.map&&adpLive.map[pid]!=null)return adpLive.map[pid];
-  return ADP[pid]==null?null:ADP[pid];
-}
-function adpAsOf(){return (adpLive&&adpLive.asof)||ADP_ASOF;}
-function adpCount(){return Object.keys((adpLive&&adpLive.map)||ADP).length;}
 /* Two ranks over the same pool, so they are directly comparable: MRANK is your
    order, ARANK is ESPN's. Comparing your rank straight to a raw ADP number would
    skew positive down the board, since a real draft also spends picks on kickers,
@@ -748,7 +754,7 @@ listEl.addEventListener("click",e=>{
 });
 document.getElementById("reset").addEventListener("click",()=>{
   const t=TABS.find(t=>t.key===active).label;
-  if(!confirm('Reset the "'+t+'" board back to consensus order? Your custom order for this tab will be cleared.'))return;
+  if(!confirm('Reset the "'+t+'" board back to ADP order? Your custom order for this tab will be cleared.'))return;
   fillActiveOrder(defaultTabOrder(active));save();renderList();
 });
 const ovl=document.getElementById("ovl");
@@ -911,33 +917,65 @@ function openSync(){
   modalEl.innerHTML=h+'<p class="smsg" id="smsg"></p></div>';
   ovl.classList.add("show");
 }
-function openAdp(){
+// How far the board has drifted from the ADP baseline -- shown before you decide
+// whether a refresh should reorder anything.
+function orderDrift(){
+  const def=defaultMaster();let moved=0;
+  def.forEach((id,i)=>{if(MRANK[id]&&MRANK[id]!==i+1)moved++;});
+  return moved;
+}
+function openAdp(justRefreshed){
   modalEl.style.removeProperty("--pc");
+  let head="";
+  if(justRefreshed!=null){
+    const drift=orderDrift();
+    head='<div class="prompt"><div class="pq">Updated <b>'+justRefreshed+'</b> players from ESPN.</div>'
+      +'<p class="snote">Your board order is untouched so far. '
+      +(drift?'Applying the new ADP order would move <b>'+drift+'</b> of '+adpCount()+' players and discard any ordering you’ve done by hand.'
+             :'Your board already matches the ADP order, so applying it changes nothing.')
+      +'</p>'
+      +'<div class="syncbtns"><button class="reset" data-adp="keep">Keep my order</button>'
+      +'<button class="reset danger" data-adp="applynow">Use new ADP order</button></div></div>';
+  }
   modalEl.innerHTML='<div class="mhead"><button class="mclose" aria-label="Close">×</button>'
    +'<div class="mname">Average draft position</div>'
    +'<div class="msub">ESPN PPR &middot; as of '+prettyDate(adpAsOf())+'</div></div>'
-   +'<div class="sync">'
+   +'<div class="sync">'+head
    +'<p class="snote">ADP is where ESPN drafters are actually taking each player. The number beside it compares ESPN’s order to <b>your own overall order</b> — not the tab you’re viewing. <span class="vchip up">+50</span> means he lasts about fifty places past where you have him, so you can wait; <span class="vchip down">−50</span> means he’s gone before you’d pick him.</p>'
    +'<p class="snote">This board disagrees with ESPN often — the typical gap is around 19 places — so only gaps of <b>'+ADP_EDGE+'+</b> get coloured. Covering <b>'+adpCount()+'</b> of 222 players; Keenan Allen and Brashard Smith sit outside ESPN’s top 400 and have no ADP.</p>'
    +'<div class="syncbtns"><button class="reset" data-adp="refresh">Refresh from ESPN</button></div>'
-   +(adpLive?'<div class="syncbtns"><button class="reset danger" data-adp="reset">Revert to built-in</button></div>':'')
+   +'<div class="syncbtns"><button class="reset" data-adp="applyorder">Reset board to ADP order</button></div>'
+   +(adpLive?'<div class="syncbtns"><button class="reset danger" data-adp="reset">Revert to built-in ADP</button></div>':'')
    +'<p class="snote" style="margin-top:14px">ADP drifts all preseason, so refresh before your draft — but it pulls about <b>12 MB</b> from ESPN. Do it on wifi, not at the table.</p>'
    +'<p class="smsg" id="smsg"></p></div>';
   ovl.classList.add("show");
 }
 document.getElementById("adpbtn").addEventListener("click",openAdp);
+function applyAdpOrder(){
+  store.master=defaultMaster();
+  save();renderList();
+}
 modalEl.addEventListener("click",async e=>{
   const b=e.target.closest("[data-adp]");if(!b)return;
-  if(b.dataset.adp==="reset"){
+  const act=b.dataset.adp;
+  if(act==="keep"){openAdp();msg("Kept your order. ADP numbers and deltas are updated.","good");return;}
+  if(act==="applynow"){applyAdpOrder();openAdp();msg("Board reordered to the new ADP.","good");return;}
+  if(act==="applyorder"){
+    const drift=orderDrift();
+    if(drift&&!confirm("Reset every tab to ADP order? This moves "+drift+" players and discards any ordering you've done by hand."))return;
+    applyAdpOrder();openAdp();msg(drift?"Board reset to ADP order.":"Already in ADP order — nothing changed.","good");
+    return;
+  }
+  if(act==="reset"){
     adpLive=null;try{localStorage.removeItem(ADP_KEY);}catch(err){}
-    renderList();openAdp();msg("Reverted to the built-in ADP.","");
+    renderList();openAdp();msg("Reverted to the built-in ADP. Your board order is unchanged.","");
     return;
   }
   msg("Downloading from ESPN… this can take a minute.","");
   b.disabled=true;
   try{
     const n=await refreshAdp();
-    renderList();openAdp();msg("Updated "+n+" players from ESPN.","good");
+    renderList();openAdp(n);
   }catch(err){
     b.disabled=false;
     msg(err.message==="empty"?"ESPN returned no ADP data — try again later."
