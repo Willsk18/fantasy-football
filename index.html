@@ -143,6 +143,28 @@
   .smsg{margin:12px 0 0;font-size:12.5px;line-height:1.5;min-height:1px}
   .smsg.bad{color:#E8735F}
   .smsg.good{color:var(--rb)}
+  .ptabs{display:flex;gap:3px;margin:14px -2px -16px;padding-top:2px}
+  .ptab{appearance:none;border:0;background:transparent;cursor:pointer;font:inherit;font-weight:700;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);padding:9px 10px 11px;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s}
+  .ptab:hover{color:var(--ink-dim)}
+  .ptab.on{color:var(--chalk);border-bottom-color:var(--pc,#3a4756)}
+  .scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:14px 18px 0}
+  .scrollx::-webkit-scrollbar{height:6px}
+  .scrollx::-webkit-scrollbar-thumb{background:#2e3a48;border-radius:3px}
+  table.gt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  table.gt th{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;text-align:right;padding:0 0 7px 10px;white-space:nowrap}
+  table.gt td{font-size:13px;color:var(--ink);text-align:right;padding:7px 0 7px 10px;border-top:1px solid var(--line);white-space:nowrap}
+  table.gt th:first-child,table.gt td:first-child{padding-left:0}
+  table.gt .wkc{color:var(--ink-faint);font-size:12px;text-align:left;width:26px}
+  table.gt .oppc{text-align:left;color:var(--ink-dim);font-weight:600}
+  table.gt th.fpc{color:var(--ink-dim)}
+  table.gt td.fpc{font-weight:800;color:var(--chalk)}
+  table.gt td.fpc.hi{color:var(--rb)}
+  table.gt tr.byerow td{color:var(--ink-faint);font-style:italic}
+  .glsum{padding:12px 18px 0;font-size:12.5px;color:var(--ink-dim)}
+  .glsum b{color:var(--chalk);font-weight:800}
+  #pbody .note{padding:0 18px;margin:12px 0 0}
+  #pbody>.note:only-child{padding:18px;margin:0}
+  #pbody{padding-bottom:18px}
 </style>
 
 <header>
@@ -415,6 +437,16 @@ const PLAYERS = [
 ].map(p=>({...p,id:slug(p.name)+"-"+p.team.toLowerCase()}));
 const BY_ID = Object.fromEntries(PLAYERS.map(p=>[p.id,p]));
 
+/* ESPN athlete ids, resolved once from team rosters + search and verified
+   against the athlete endpoint. Used for the 2025 game log fetch. */
+const ESPN_ID={"jaxon-smith-njigba-sea":4430878,"ja-marr-chase-cin":4362628,"puka-nacua-lar":4426515,"amon-ra-st-brown-det":4374302,"bijan-robinson-atl":4430807,"jahmyr-gibbs-det":4429795,"christian-mccaffrey-sf":3117251,"drake-london-atl":4426502,"george-pickens-dal":4426354,"jonathan-taylor-ind":4242335,"ceedee-lamb-dal":4241389,"justin-jefferson-min":4262921,"a-j-brown-ne":4047646,"nico-collins-hou":4258173,"tee-higgins-cin":4239993,"de-von-achane-mia":4429160,"tetairoa-mcmillan-car":4685472,"zay-flowers-bal":4429615,"james-cook-buf":4379399,"josh-allen-buf":3918298,"terry-mclaurin-wsh":3121422,"devonta-smith-phi":4241478,"rashee-rice-kc":4428331,"jaylen-waddle-den":4372016,"ladd-mcconkey-lac":4612826,"luther-burden-chi":4685278,"derrick-henry-bal":3043078,"chase-brown-cin":4362238,"chris-olave-no":4361370,"emeka-egbuka-tb":4567750,"davante-adams-lar":16800,"garrett-wilson-nyj":4569618,"dj-moore-buf":3915416,"ashton-jeanty-lv":4890973,"omarion-hampton-lac":4685382,"mike-evans-sf":16737,"carnell-tate-ten":4871023,"kenneth-walker-kc":4567048,"jameson-williams-det":4426388,"breece-hall-nyj":4427366,"kyren-williams-lar":4430737,"saquon-barkley-phi":3929630,"cam-skattebo-nyg":4696981,"josh-jacobs-gb":4047365,"marvin-harrison-ari":4432708,"makai-lemon-phi":4870795,"javonte-williams-dal":4361579,"rome-odunze-chi":4431299,"travis-etienne-no":4239996,"jeremiyah-love-ari":4870808,"alec-pierce-ind":4360078,"parker-washington-jax":4432620,"courtland-sutton-den":3128429,"christian-watson-gb":4248528,"jordan-addison-min":4429205,"drake-maye-ne":4431452,"jordyn-tyson-no":4880281,"dk-metcalf-pit":4047650,"michael-pittman-pit":4035687,"malik-nabers-nyg":4595348,"lamar-jackson-bal":3916387,"david-montgomery-hou":4035538,"ricky-pearsall-sf":4428209,"treveyon-henderson-ne":4432710,"jakobi-meyers-jax":3916433,"quinshon-judkins-cle":4685702,"kenneth-gainwell-tb":4371733,"rhamondre-stevenson-ne":4569173,"wan-dale-robinson-ten":4569587,"jayden-reed-gb":4362249,"jadarian-price-sea":4685512,"josh-downs-ind":4688813,"quentin-johnston-lac":4429025,"tony-pollard-ten":3916148,"colston-loveland-chi":4723086,"d-andre-swift-chi":4259545,"chris-godwin-tb":3116165,"jayden-higgins-hou":4877706,"brock-bowers-lv":4432665,"xavier-worthy-kc":4683062,"joe-burrow-cin":3915511,"chuba-hubbard-car":4241416,"brian-thomas-jax":4432773,"bhayshul-tuten-jax":4882093,"michael-wilson-ari":4360761,"rico-dowdle-pit":4038815,"rj-harvey-den":4568490,"jaylen-warren-pit":4569987,"trey-mcbride-ari":4361307,"romeo-doubs-ne":4361432,"bucky-irving-tb":4596448,"omar-cooper-nyj":4723820,"jalen-hurts-phi":4040715,"matthew-golden-gb":4701936,"jalen-coker-car":4695883,"khalil-shakir-buf":4373678,"tyler-warren-ind":4431459,"kyle-monangai-chi":4608686,"jayden-daniels-wsh":4426348,"aaron-jones-min":3042519,"rashid-shaheed-sea":4032473,"jalen-nailor-lv":4382466,"sam-laporta-det":4430027,"dak-prescott-dal":2577417,"brock-purdy-sf":4361741,"harold-fannin-cle":5083076,"blake-corum-lar":4429096,"jordan-mason-min":4360569,"caleb-williams-chi":4431611,"tucker-kraft-gb":4572680,"antonio-williams-wsh":5081432,"trevor-lawrence-jax":4360310,"tyquan-thornton-kc":4362921,"calvin-ridley-ten":3925357,"patrick-mahomes-kc":3139477,"jaxson-dart-nyg":4689114,"emanuel-wilson-sea":4887558,"adonai-mitchell-nyj":4597500,"travis-kelce-kc":15847,"andrei-iosivas-cin":4368003,"rachaad-white-wsh":4697815,"jacory-croskey-merritt-wsh":4575131,"kc-concepcion-cle":4870653,"denzel-boston-cle":4832800,"chris-rodriguez-jax":4362619,"caleb-douglas-mia":4869645,"isaiah-likely-nyg":4361050,"j-k-dobbins-den":4241985,"jonathon-brooks-car":4678008,"george-kittle-sf":3040151,"jerry-jeudy-cle":4241463,"kyle-pitts-atl":4360248,"jalen-mcmillan-tb":4430834,"bo-nix-den":4426338,"jared-goff-det":3046779,"germie-bernard-pit":4685261,"tre-tucker-lv":4428718,"matthew-stafford-lar":12483,"jack-bech-lv":4603186,"ryan-flournoy-dal":5083754,"justin-herbert-lac":4038941,"malik-washington-mia":4569603,"jake-ferguson-dal":4242355,"dalton-kincaid-buf":4385690,"mark-andrews-bal":3116365,"brenton-strange-jax":4430539,"kyler-murray-min":3917315,"dallas-goedert-phi":3121023,"t-j-hockenson-min":4036133,"baker-mayfield-tb":3052587,"hunter-henry-ne":3046439,"malik-willis-mia":4242512,"greg-dulcich-mia":4367209,"tyler-shough-no":4360689,"chig-okonkwo-wsh":4360635,"jordan-love-gb":4036378,"dalton-schultz-hou":3117256,"c-j-stroud-hou":4432577,"kenyon-sadiq-nyj":5083315,"cam-ward-ten":4688380,"pat-freiermuth-pit":4361411,"daniel-jones-ind":3917792,"juwan-johnson-no":3929645,"sam-darnold-sea":3912547,"david-njoku-lac":3123076,"bryce-young-car":4685720,"jacoby-brissett-ari":2578570,"aaron-rodgers-pit":8439,"tua-tagovailoa-atl":4241479,"geno-smith-nyj":15864,"shedeur-sanders-cle":4432762,"kirk-cousins-lv":14880,"isiah-pacheco-det":4361529,"alvin-kamara-no":3054850,"tyrone-tracy-nyg":4360516,"dylan-sampson-cle":5081397,"tyler-allgeier-ari":4373626,"woody-marks-hou":4429059,"brian-robinson-atl":4241474,"justice-hill-bal":4038441,"braelon-allen-nyj":4685247,"tyjae-spears-ten":4428557,"tank-bigsby-phi":4429013,"ty-johnson-buf":3915411,"mike-washington-lv":4686658,"jonah-coleman-den":4702555,"kaytron-allen-wsh":4685246,"keaton-mitchell-lac":4596334,"emmett-johnson-kc":4832955,"ollie-gordon-mia":4711533,"jaydon-blue-dal":4685279,"deebo-samuel-":3126486,"samaje-perine-cin":3116389,"stefon-diggs-":2976212,"chris-brooks-gb":3149687,"brandon-aiyuk-":4360438,"kimani-vidal-lac":4430968,"nicholas-singleton-ten":4685555,"ray-davis-buf":4429501,"marshawn-lloyd-gb":4429023,"chris-bell-mia":4869961,"jordan-james-sf":4685397,"kayshon-boutte-ne":4429022,"demond-claiborne-min":4832846,"jaylen-wright-mia":4682745,"sean-tucker-tb":4430871,"trey-benson-ari":4429275,"kaelon-black-sf":4696044,"jauan-jennings-min":3886598,"brashard-smith-kc":4596602,"isaac-teslaa-det":5123663,"rashod-bateman-bal":4360939,"darnell-mooney-nyg":4040655,"zachariah-branch-atl":4870612,"keenan-allen-":15818,"tyreek-hill-":3116406,"cooper-kupp-sea":2977187,"jaylin-noel-hou":4586312,"tank-dell-hou":4366031,"troy-franklin-den":4431280,"chris-brazzell-car":5091739,"tre-harris-lac":4686612};
+
+/* 2026 regular season, baked from ESPN so the schedule works offline.
+   18 slots per team, semicolon-separated: ""=bye, "OPP:MM-DD"=home,
+   "@OPP:MM-DD"=away, "nOPP:MM-DD"=neutral site. Byes cross-check
+   against the bye field in PLAYERS. */
+const SCHED={ari:"@LAC:09-13;SEA:09-20;@SF:09-27;@NYG:10-04;DET:10-11;@LAR:10-18;DEN:10-25;@DAL:11-01;@SEA:11-08;LAR:11-15;@KC:11-22;WSH:11-29;PHI:12-06;;NYJ:12-20;@NO:12-27;LV:01-03;SF:01-10",atl:"@PIT:09-13;CAR:09-20;@GB:09-25;@NO:10-06;BAL:10-12;CHI:10-18;SF:10-25;@TB:11-01;nCIN:11-08;KC:11-15;;@MIN:11-29;DET:12-06;@CLE:12-13;@WSH:12-20;TB:12-27;NO:01-03;@CAR:01-10",bal:"@IND:09-13;NO:09-20;nDAL:09-27;TEN:10-04;@ATL:10-12;@CLE:10-18;CIN:10-25;@BUF:11-01;JAX:11-06;LAC:11-17;@CAR:11-22;@HOU:11-29;;TB:12-13;@PIT:12-20;CLE:12-27;@CIN:01-01;PIT:01-10",buf:"@HOU:09-13;DET:09-18;LAC:09-27;NE:10-04;@LAR:10-13;@LV:10-18;;BAL:11-01;@MIN:11-10;@NYJ:11-15;MIA:11-22;KC:11-27;@NE:12-06;@GB:12-14;CHI:12-20;@DEN:12-25;@MIA:01-03;NYJ:01-10",car:"CHI:09-13;@ATL:09-20;@CLE:09-27;DET:10-05;;@PHI:10-18;TB:10-25;@GB:10-30;DEN:11-08;@NO:11-15;BAL:11-22;@TB:12-01;@MIN:12-06;NO:12-13;CIN:12-20;@PIT:12-27;SEA:01-03;ATL:01-10",chi:"@CAR:09-13;MIN:09-20;PHI:09-29;NYJ:10-04;@GB:10-11;@ATL:10-18;NE:10-23;@SEA:11-03;TB:11-09;;NO:11-22;@DET:11-26;JAX:12-06;@MIA:12-13;@BUF:12-20;GB:12-25;DET:01-03;@MIN:01-10",cin:"TB:09-13;@HOU:09-20;@PIT:09-27;JAX:10-04;@MIA:10-11;;@BAL:10-25;TEN:11-01;nATL:11-08;PIT:11-16;@WSH:11-24;NO:11-29;@CLE:12-06;KC:12-13;@CAR:12-20;@IND:12-27;BAL:01-01;CLE:01-10",cle:"@JAX:09-13;@TB:09-20;CAR:09-27;PIT:10-02;@NYJ:10-11;BAL:10-18;@TEN:10-25;@PIT:11-01;@NO:11-08;HOU:11-15;;LV:11-29;CIN:12-06;ATL:12-13;@NYG:12-20;@BAL:12-27;IND:01-03;@CIN:01-10",dal:"@NYG:09-14;WSH:09-20;nBAL:09-27;@HOU:10-04;TB:10-09;@GB:10-19;@PHI:10-27;ARI:11-01;@IND:11-08;SF:11-15;TEN:11-22;PHI:11-26;@SEA:12-08;;@LAR:12-20;JAX:12-28;NYG:01-03;@WSH:01-10",den:"@KC:09-15;JAX:09-20;LAR:09-28;@SF:10-04;@LAC:10-11;SEA:10-16;@ARI:10-25;KC:11-01;@CAR:11-08;;LV:11-22;@PIT:11-27;MIA:12-06;@NYJ:12-13;@LV:12-20;BUF:12-25;@NE:01-03;LAC:01-10",det:"NO:09-13;@BUF:09-18;NYJ:09-27;@CAR:10-05;@ARI:10-11;;GB:10-25;MIN:11-01;@MIA:11-08;nNE:11-15;TB:11-22;CHI:11-26;@ATL:12-06;TEN:12-13;@MIN:12-21;NYG:12-29;@CHI:01-03;@GB:01-10",gb:"@MIN:09-13;@NYJ:09-20;ATL:09-25;@TB:10-04;CHI:10-11;DAL:10-19;@DET:10-25;CAR:10-30;@NE:11-08;MIN:11-15;;@LAR:11-26;@NO:12-06;BUF:12-14;MIA:12-20;@CHI:12-25;HOU:01-05;DET:01-10",hou:"BUF:09-13;CIN:09-20;@IND:09-27;DAL:10-04;@TEN:10-11;nJAX:10-18;NYG:10-25;;@LAC:11-08;@CLE:11-15;IND:11-20;BAL:11-29;@PIT:12-07;@WSH:12-13;JAX:12-20;@PHI:12-25;@GB:01-05;TEN:01-10",ind:"BAL:09-13;@KC:09-21;HOU:09-27;nWSH:10-04;@PIT:10-11;TEN:10-18;@MIN:10-25;@JAX:11-01;DAL:11-08;MIA:11-15;@HOU:11-20;NYG:11-29;;@PHI:12-13;@TEN:12-20;CIN:12-27;@CLE:01-03;JAX:01-10",jax:"CLE:09-13;@DEN:09-20;NE:09-27;@CIN:10-04;nPHI:10-11;nHOU:10-18;;IND:11-01;@BAL:11-06;@TEN:11-15;@NYG:11-22;TEN:11-29;@CHI:12-06;PIT:12-15;@HOU:12-20;@DAL:12-28;WSH:01-03;@IND:01-10",kc:"DEN:09-15;IND:09-21;@MIA:09-27;@LV:10-04;;LAC:10-18;@SEA:10-26;@DEN:11-01;NYJ:11-08;@ATL:11-15;ARI:11-22;@BUF:11-27;@LAR:12-04;@CIN:12-13;NE:12-22;SF:12-27;@LAC:01-03;LV:01-10",lac:"ARI:09-13;LV:09-20;@BUF:09-27;@SEA:10-04;DEN:10-11;@KC:10-18;;@LAR:11-01;HOU:11-08;@BAL:11-17;NYJ:11-22;NE:11-30;@TB:12-06;@LV:12-13;SF:12-18;@MIA:12-27;KC:01-03;@DEN:01-10",lar:"nSF:09-11;NYG:09-22;@DEN:09-28;@PHI:10-04;BUF:10-13;ARI:10-18;@LV:10-25;LAC:11-01;@WSH:11-08;@ARI:11-15;;GB:11-26;KC:12-04;@SF:12-13;DAL:12-20;@SEA:12-26;@TB:01-03;SEA:01-10",lv:"MIA:09-13;@LAC:09-20;@NO:09-27;KC:10-04;@NE:10-11;BUF:10-18;LAR:10-25;@NYJ:11-01;@SF:11-08;SEA:11-15;@DEN:11-22;@CLE:11-29;;LAC:12-13;DEN:12-20;TEN:12-27;@ARI:01-03;@KC:01-10",mia:"@LV:09-13;@SF:09-20;KC:09-27;@MIN:10-04;CIN:10-11;;@NYJ:10-25;NE:11-01;DET:11-08;@IND:11-15;@BUF:11-22;NYJ:11-29;@DEN:12-06;CHI:12-13;@GB:12-20;LAC:12-27;BUF:01-03;@NE:01-10",min:"GB:09-13;@CHI:09-20;@TB:09-27;MIA:10-04;@NO:10-11;;IND:10-25;@DET:11-01;BUF:11-10;@GB:11-15;nSF:11-23;ATL:11-29;CAR:12-06;@NE:12-11;DET:12-21;WSH:12-27;@NYJ:01-03;CHI:01-10",ne:"@SEA:09-10;PIT:09-20;@JAX:09-27;@BUF:10-04;LV:10-11;NYJ:10-18;@CHI:10-23;@MIA:11-01;GB:11-08;nDET:11-15;;@LAC:11-30;BUF:12-06;MIN:12-11;@KC:12-22;@NYJ:12-27;DEN:01-03;MIA:01-10",no:"@DET:09-13;@BAL:09-20;LV:09-27;ATL:10-06;MIN:10-11;@NYG:10-18;nPIT:10-25;;CLE:11-08;CAR:11-15;@CHI:11-22;@CIN:11-29;GB:12-06;@CAR:12-13;@TB:12-20;ARI:12-27;@ATL:01-03;TB:01-10",nyg:"DAL:09-14;@LAR:09-22;TEN:09-27;ARI:10-04;@WSH:10-11;NO:10-18;@HOU:10-25;;@PHI:11-08;WSH:11-13;JAX:11-22;@IND:11-29;SF:12-06;@SEA:12-13;CLE:12-20;@DET:12-29;@DAL:01-03;PHI:01-10",nyj:"@TEN:09-13;GB:09-20;@DET:09-27;@CHI:10-04;CLE:10-11;@NE:10-18;MIA:10-25;LV:11-01;@KC:11-08;BUF:11-15;@LAC:11-22;@MIA:11-29;;DEN:12-13;@ARI:12-20;NE:12-27;MIN:01-03;@BUF:01-10",phi:"WSH:09-13;@TEN:09-20;@CHI:09-29;LAR:10-04;nJAX:10-11;CAR:10-18;DAL:10-27;@WSH:11-02;NYG:11-08;;PIT:11-22;@DAL:11-26;@ARI:12-06;IND:12-13;SEA:12-19;HOU:12-25;@SF:01-04;@NYG:01-10",pit:"ATL:09-13;@NE:09-20;CIN:09-27;@CLE:10-02;IND:10-11;@TB:10-18;nNO:10-25;CLE:11-01;;@CIN:11-16;@PHI:11-22;DEN:11-27;HOU:12-07;@JAX:12-15;BAL:12-20;CAR:12-27;@TEN:01-03;@BAL:01-10",sea:"NE:09-10;@ARI:09-20;@WSH:09-27;LAC:10-04;SF:10-11;@DEN:10-16;KC:10-26;CHI:11-03;ARI:11-08;@LV:11-15;;@SF:11-29;DAL:12-08;NYG:12-13;@PHI:12-19;LAR:12-26;@CAR:01-03;@LAR:01-10",sf:"nLAR:09-11;MIA:09-20;ARI:09-27;DEN:10-04;@SEA:10-11;WSH:10-20;@ATL:10-25;;LV:11-08;@DAL:11-15;nMIN:11-23;SEA:11-29;@NYG:12-06;LAR:12-13;@LAC:12-18;@KC:12-27;PHI:01-04;@ARI:01-10",tb:"@CIN:09-13;CLE:09-20;MIN:09-27;GB:10-04;@DAL:10-09;PIT:10-18;@CAR:10-25;ATL:11-01;@CHI:11-09;;@DET:11-22;CAR:12-01;LAC:12-06;@BAL:12-13;NO:12-20;@ATL:12-27;LAR:01-03;@NO:01-10",ten:"NYJ:09-13;PHI:09-20;@NYG:09-27;@BAL:10-04;HOU:10-11;@IND:10-18;CLE:10-25;@CIN:11-01;;JAX:11-15;@DAL:11-22;@JAX:11-29;WSH:12-06;@DET:12-13;IND:12-20;@LV:12-27;PIT:01-03;@HOU:01-10",wsh:"@PHI:09-13;@DAL:09-20;SEA:09-27;nIND:10-04;NYG:10-11;@SF:10-20;;PHI:11-02;LAR:11-08;@NYG:11-13;CIN:11-24;@ARI:11-29;@TEN:12-06;HOU:12-13;ATL:12-20;@MIN:12-27;@JAX:01-03;DAL:01-10"};
+
 const TABS=[{key:"overall",label:"Overall"},{key:"qb",label:"QB"},{key:"rb",label:"RB"},{key:"wr",label:"WR"},{key:"te",label:"TE"},{key:"flex",label:"Flex"}];
 const FLEX=new Set(["RB","WR","TE"]);
 
@@ -645,10 +677,88 @@ document.getElementById("reset").addEventListener("click",()=>{
 const ovl=document.getElementById("ovl");
 const modalEl=document.getElementById("modal");
 function fmtVorp(v){return v==null?"\u2014":(v>0?"+":"")+v;}
-function openPlayer(id){
-  const p=BY_ID[id];if(!p)return;
+
+/* ---------- Player profile: overview / 2025 game log / 2026 schedule ---------- */
+const GL_KEY="ff2026:gl:";
+const GL_COLS={
+  QB:[["completions","Cmp"],["passingAttempts","Att"],["passingYards","Pass"],["passingTouchdowns","TD"],["interceptions","INT"],["rushingYards","Rush"],["rushingTouchdowns","RuTD"]],
+  RB:[["rushingAttempts","Car"],["rushingYards","RuYd"],["rushingTouchdowns","RuTD"],["receptions","Rec"],["receivingYards","ReYd"],["receivingTouchdowns","ReTD"]],
+  WR:[["receivingTargets","Tgt"],["receptions","Rec"],["receivingYards","Yds"],["receivingTouchdowns","TD"]],
+  TE:[["receivingTargets","Tgt"],["receptions","Rec"],["receivingYards","Yds"],["receivingTouchdowns","TD"]]
+};
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function num(v){if(v==null)return 0;const n=parseFloat(String(v).replace(/,/g,""));return isFinite(n)?n:0;}
+// Half-PPR, matching the league the board is built for.
+function halfPPR(s){
+  return 0.04*num(s.passingYards)+4*num(s.passingTouchdowns)-2*num(s.interceptions)
+    +0.1*num(s.rushingYards)+6*num(s.rushingTouchdowns)
+    +0.1*num(s.receivingYards)+6*num(s.receivingTouchdowns)+0.5*num(s.receptions)
+    -2*num(s.fumblesLost);
+}
+// Keep only what the table needs -- the raw ESPN payload is ~150KB per player
+// and would blow the localStorage budget after a dozen lookups.
+function trimGameLog(j){
+  const names=j.names||[],evmap=j.events||{},rows=[];
+  const sts=j.seasonTypes||[];
+  const st=sts.find(s=>/regular season/i.test(s.displayName||""))||sts[0];
+  ((st&&st.categories)||[]).forEach(c=>(c.events||[]).forEach(e=>{
+    const meta=evmap[e.eventId];if(!meta)return;
+    const s={};names.forEach((n,i)=>{s[n]=(e.stats||[])[i];});
+    rows.push({wk:meta.week,opp:(meta.opponent||{}).abbreviation||"",at:meta.atVs||"",res:meta.gameResult||"",s:s});
+  }));
+  rows.sort((a,b)=>a.wk-b.wk);
+  return {rows:rows};
+}
+// 2025 is finished, so a hit is valid forever -- only ever fetched once per player.
+async function loadGameLog(p){
+  const eid=ESPN_ID[p.id];
+  if(!eid)throw new Error("no-id");
+  try{const c=localStorage.getItem(GL_KEY+eid);if(c)return JSON.parse(c);}catch(e){}
+  const r=await fetch("https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/"+eid+"/gamelog?season=2025");
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  const t=trimGameLog(await r.json());
+  try{localStorage.setItem(GL_KEY+eid,JSON.stringify(t));}catch(e){}
+  return t;
+}
+function glTable(p,d){
+  if(!d||!d.rows.length)return '<div class="note">No 2025 regular-season games on record.</div>';
+  const cols=GL_COLS[p.pos]||GL_COLS.WR;
+  let h='<div class="scrollx"><table class="gt"><thead><tr><th>Wk</th><th>Opp</th>'
+    +cols.map(c=>'<th>'+c[1]+'</th>').join("")+'<th class="fpc">FP</th></tr></thead><tbody>';
+  let tot=0,best=0;
+  d.rows.forEach(r=>{const fp=halfPPR(r.s);tot+=fp;if(fp>best)best=fp;});
+  d.rows.forEach(r=>{
+    const fp=halfPPR(r.s);
+    h+='<tr><td class="wkc">'+r.wk+'</td><td class="oppc">'+(r.at==="@"?"@":"")+r.opp+'</td>'
+      +cols.map(c=>{const v=r.s[c[0]];return '<td>'+(v==null||v==="-"||v===""?"\u2014":v)+'</td>';}).join("")
+      +'<td class="fpc'+(fp===best?" hi":"")+'">'+fp.toFixed(1)+'</td></tr>';
+  });
+  const n=d.rows.length;
+  return h+'</tbody></table></div><div class="glsum"><b>'+n+'</b> games &middot; <b>'+(tot/n).toFixed(1)
+    +'</b> half-PPR per game &middot; best <b>'+best.toFixed(1)+'</b></div>'
+    +'<div class="note">Fantasy points computed from ESPN box scores. Gaps in week numbers are byes or missed games.</div>';
+}
+function schedTable(p){
+  const s=SCHED[(p.team||"").toLowerCase()];
+  if(!s)return '<div class="note">No 2026 team on the board for this player, so there\u2019s no schedule to show.</div>';
+  const wks=s.split(";");let neutral=false;
+  let h='<div class="scrollx"><table class="gt"><thead><tr><th>Wk</th><th>Opponent</th><th>Date</th></tr></thead><tbody>';
+  wks.forEach((c,i)=>{
+    const w=i+1;
+    if(!c){h+='<tr class="byerow"><td class="wkc">'+w+'</td><td class="oppc">Bye</td><td>\u2014</td></tr>';return;}
+    const bits=c.split(":"),tag=bits[0],d=bits[1]||"";
+    let opp=tag,pre="vs ";
+    if(tag.charAt(0)==="@"){pre="at ";opp=tag.slice(1);}
+    else if(tag.charAt(0)==="n"){pre="vs ";opp=tag.slice(1)+" *";neutral=true;}
+    const md=d.split("-");
+    h+='<tr><td class="wkc">'+w+'</td><td class="oppc">'+pre+opp+'</td><td>'+(md.length===2?MON[+md[0]-1]+" "+(+md[1]):"\u2014")+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  if(neutral)h+='<div class="note">* neutral-site game.</div>';
+  return h;
+}
+function overviewBody(p){
   const tiles=[["Proj Pts",p.fps],["VORP",fmtVorp(p.vorp)],["Auction","$"+p.auc]];
-  modalEl.style.setProperty("--pc",POS_COLOR[p.pos]);
   const has=p.g25!=null;
   let body;
   if(has){
@@ -658,17 +768,46 @@ function openPlayer(id){
     body=p.stats.map(s=>'<div class="srow"><span class="k">'+s[0]+'</span><span class="v">'+s[1]+'</span></div>').join("")
       +'<div class="note">No 2025 NFL stats (rookie or did not play)</div>';
   }
+  return '<div class="tiles">'+tiles.map(t=>'<div class="tile"><div class="v">'+t[1]+'</div><div class="k">'+t[0]+'</div></div>').join("")+'</div>'
+    +'<div class="mproj"><h4>'+(has?'2026 Projected vs 2025 Actual':'2026 Projected Stats')+'</h4>'+body+'</div>';
+}
+const PTABS=[["overview","Overview"],["log","2025 Log"],["sched","2026 Sched"]];
+let curP=null,curPT="overview";
+function paintPlayer(){
+  const p=curP;if(!p)return;
+  const teamBit=p.team?p.team+" &middot; Bye "+p.bye:"Free agent";
   modalEl.innerHTML=
     '<div class="mhead"><button class="mclose" aria-label="Close">\u00d7</button>'
     +'<div class="mname">'+p.name+'</div>'
-    +'<div class="msub">'+p.pos+p.posrk+' &middot; '+p.team+' &middot; Bye '+p.bye+' &middot; Overall '+p.ovr+'</div></div>'
-    +'<div class="tiles">'+tiles.map(t=>'<div class="tile"><div class="v">'+t[1]+'</div><div class="k">'+t[0]+'</div></div>').join("")+'</div>'
-    +'<div class="mproj"><h4>'+(has?'2026 Projected vs 2025 Actual':'2026 Projected Stats')+'</h4>'+body
-    +'</div>';
+    +'<div class="msub">'+p.pos+p.posrk+' &middot; '+teamBit+' &middot; Overall '+p.ovr+'</div>'
+    +'<div class="ptabs">'+PTABS.map(t=>'<button class="ptab'+(t[0]===curPT?" on":"")+'" data-pt="'+t[0]+'">'+t[1]+'</button>').join("")+'</div></div>'
+    +'<div id="pbody">'+(curPT==="overview"?overviewBody(p):curPT==="sched"?schedTable(p):'<div class="note">Loading 2025 game log\u2026</div>')+'</div>';
+  if(curPT==="log"){
+    const want=p.id;
+    loadGameLog(p).then(d=>{
+      if(curP&&curP.id===want&&curPT==="log")document.getElementById("pbody").innerHTML=glTable(p,d);
+    }).catch(err=>{
+      if(!curP||curP.id!==want||curPT!=="log")return;
+      document.getElementById("pbody").innerHTML='<div class="note">'
+        +(err.message==="no-id"?"No ESPN record matched to this player.":"Couldn\u2019t load the game log \u2014 check your connection. ESPN is fetched live; once loaded it\u2019s cached on this device.")
+        +'</div>';
+    });
+  }
+}
+function openPlayer(id){
+  const p=BY_ID[id];if(!p)return;
+  curP=p;curPT="overview";
+  modalEl.style.setProperty("--pc",POS_COLOR[p.pos]);
+  paintPlayer();
   ovl.classList.add("show");
 }
-function closeModal(){ovl.classList.remove("show");}
+function closeModal(){ovl.classList.remove("show");curP=null;}
 ovl.addEventListener("click",e=>{if(e.target===ovl||e.target.closest(".mclose"))closeModal();});
+modalEl.addEventListener("click",e=>{
+  const t=e.target.closest("[data-pt]");
+  if(!t||!curP)return;
+  curPT=t.dataset.pt;paintPlayer();
+});
 
 function msg(t,cls){const m=document.getElementById("smsg");if(m){m.textContent=t;m.className="smsg"+(cls?" "+cls:"");}}
 function openSync(){

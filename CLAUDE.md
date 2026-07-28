@@ -69,6 +69,9 @@ player ids. They only exist on the four position tabs.
 
 ### Persistence
 
+localStorage keys in use: `ff2026:board:v4` (the board), `ff2026:synccode` (sync code),
+`ff2026:gl:<espnId>` (cached 2025 game logs). Only the first is synced to Supabase.
+
 `store = {master, drafted, tiers, updatedAt}`, JSON-serialized under `ff2026:board:v4`
 in localStorage. `storeGet`/`storeSet` wrap this and are `async` specifically so remote
 storage can slot in behind them; they also check for a `window.storage` host bridge.
@@ -94,6 +97,59 @@ Conflicts are last-write-wins on `updatedAt`; there is no merge.
 
 Sync degrades to a no-op if `SUPABASE_URL`/`SUPABASE_ANON_KEY` are blank — the board
 still works, local-only.
+
+### Player profile and ESPN data
+
+Clicking a player opens a modal with three tabs: **Overview** (projections, unchanged),
+**2025 Log** (week-by-week box scores), **2026 Sched** (opponent, home/away, date).
+
+Two tables are baked into the file rather than fetched:
+
+- `ESPN_ID` — 222 entries mapping our player id to an ESPN athlete id. Resolved from the
+  32 team rosters, with six stragglers found via `search/v2` and each one verified against
+  the athlete endpoint. Five of those six are free agents (`team:""`) absent from every
+  roster; the sixth is Kenneth Gainwell, whom ESPN lists as "Kenny Gainwell".
+- `SCHED` — all 32 teams' 2026 regular seasons. 18 semicolon-separated slots per team:
+  `""` bye, `OPP:MM-DD` home, `@OPP:MM-DD` away, `nOPP:MM-DD` neutral site. Every derived
+  bye week was cross-checked against the `bye` field already in `PLAYERS` — all 32 matched.
+
+Schedules are baked so the tab works with no network, which matters on draft day. Game
+logs are fetched live from `site.web.api.espn.com` because 222 players × 17 weeks is too
+much to inline, then trimmed to the displayed columns and cached in localStorage under
+`ff2026:gl:<espnId>`. 2025 is complete, so a cache hit is valid permanently.
+
+ESPN's JSON endpoints send `Access-Control-Allow-Origin: *`, which is the only reason a
+static page can call them at all. **Do not switch to scraping espn.com HTML** — those
+pages send no CORS header and cannot be read from the browser.
+
+Column sets differ by position and are keyed by ESPN's `names` array rather than by index,
+since a QB's stat columns are not a WR's. Fantasy points are computed client-side in
+`halfPPR()`, not taken from ESPN.
+
+Rookies return a payload with no `seasonTypes` key at all; `trimGameLog` degrades to an
+empty row list and the tab shows a "no games" note.
+
+#### Regenerating the baked tables
+
+Neither table has a build script — they were generated with shell one-liners and pasted
+in. If a player is added to `PLAYERS`, resolve their id from the roster endpoint:
+
+```bash
+curl -s "https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/cin/roster" \
+| sed 's/{"id":"/\n@@/g' | grep '^@@' \
+| sed -n 's/^@@\([0-9]\{4,8\}\)".*"fullName":"\([^"]*\)".*/\1|\2/p'
+```
+
+Then verify it resolves to the right person before trusting it:
+
+```bash
+curl -s "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/<id>" \
+| grep -o '"displayName":"[^"]*"' | head -1
+```
+
+Schedules only need regenerating for a new season. Note that `shortName` uses `VS` (not
+`@`) for neutral-site games — a naive `@`-only parse silently drops those games, which is
+how a team ends up with 16 games instead of 17.
 
 ### Why the SQL looks the way it does
 
