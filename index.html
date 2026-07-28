@@ -1196,12 +1196,12 @@ modalEl.addEventListener("click",e=>{
   if(b.dataset.d==="stop"){
     // Ending a draft clears the board for the next one. Destructive and it
     // syncs, so confirm whenever there's actually something to lose.
+    /* No confirm() here on purpose. Dialogs are suppressed in at least one
+       browser this board is used in -- confirm() returns false without ever
+       showing, so the guard silently ate the whole action. The panel states
+       the consequence before you click, which is the warning that actually
+       gets seen. */
     const n=drafted.size;
-    let ok=true;
-    // A blocked or dismissed dialog must not silently leave the board crossed
-    // off -- treat anything other than an explicit "cancel" as go.
-    if(n){try{ok=confirm("End the draft and put all "+n+" crossed-off players back on the board?");}catch(err){ok=true;}}
-    if(!ok)return;
     drafted.clear();
     draftCfg.on=false;
     draftCfg.offset=0;        // calibrated to the draft just ended; stale for the next one
