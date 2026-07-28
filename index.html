@@ -1428,6 +1428,8 @@ function repaintAvail(){
     const v=availability(id,!!(top&&top.has(id)));
     el.className="avail"+(v?" "+v.cls:"");
     el.textContent=v?pct(v.p):"";
+    // The number is always relative to one specific pick -- say which.
+    el.title=v?("Chance he's still on the board at pick "+badgePick()):"";
   }
 }
 function oddsBlock(p){
