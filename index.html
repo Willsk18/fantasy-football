@@ -1318,10 +1318,79 @@ function pLastsRaw(pid,pick){
   const a=adpOf(pid);
   return a==null?null:1-normCdf((pick-a)/adpSigma(pid,a));
 }
+/* ---------- Monte Carlo draft (chunk 6) ----------------------------------
+   The closed form judges each player alone, so it never enforces that exactly
+   one player leaves the board per pick. Measured, that drifts badly: the
+   marginals implied 185 players gone by pick 180 when only 179 picks exist.
+
+   Simulating fixes it by construction. Give every undrafted player a noisy
+   score (adp + sigma*Z), sort, and that ordering IS a draft -- rank r goes at
+   pick now+r. Because picks are handed out by RANK rather than by ADP
+   magnitude, the fact that ESPN's ADP scale runs ~7% long against real pick
+   numbers stops mattering; only relative order and spread do.
+
+   No phantom picks: ten picks take ten real players. An earlier attempt added
+   them to close an apparent shortfall, but the pool is complete (one player
+   under ADP 120 was missing, since added) and ESPN's own 368-player universe
+   shows the same shortfall -- it is the stretched scale, which rank assignment
+   already absorbs. Phantoms corrected for it a second time.
+
+   Seeded on the board state, so a given position always yields identical
+   numbers -- nothing wobbles between repaints. One run scores every player at
+   once, so the cost is per pick, not per card.                              */
+const MC_SIMS=1200;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+let mcCache=null;
+function mcKey(){
+  return draftCfg.on
+    ? pickNow()+"|"+drafted.size+"|"+draftCfg.teams+"|"+draftCfg.slot+"|"+draftCfg.snake+"|"+draftCfg.vol+"|"+(adpLive?adpLive.asof:"base")
+    : "off";
+}
+function mcRun(){
+  const key=mcKey();
+  if(mcCache&&mcCache.key===key)return mcCache;
+  const now=pickNow(),targets=oddsPicks(3);
+  const pool=[];
+  store.master.forEach(id=>{
+    if(drafted.has(id))return;
+    const a=adpOf(id);
+    if(a!=null)pool.push({id:id,a:a,s:adpSigma(id,a)});
+  });
+  if(!targets.length||!pool.length){mcCache={key:key,targets:targets,p:{},n:0};return mcCache;}
+  const np=pool.length,nt=targets.length;
+  const hits={};
+  for(let i=0;i<np;i++)hits[pool[i].id]=[0,0,0];
+  const rnd=mulberry32(1013904223^(now*2654435761));
+  const score=new Float64Array(np),order=new Array(np);
+  const cmp=(x,y)=>score[x]-score[y];
+  for(let s=0;s<MC_SIMS;s++){
+    for(let i=0;i<np;i++){
+      let u=rnd();if(u<1e-12)u=1e-12;
+      score[i]=pool[i].a+pool[i].s*Math.sqrt(-2*Math.log(u))*Math.cos(6.283185307179586*rnd());
+      order[i]=i;
+    }
+    order.sort(cmp);
+    for(let r=0;r<np;r++){
+      const at=now+r,h=hits[pool[order[r]].id];   // rank r means he goes at pick now+r
+      for(let t=0;t<nt;t++) if(at>=targets[t])h[t]++;
+    }
+  }
+  const out={};
+  for(const id in hits)out[id]=[hits[id][0]/MC_SIMS,hits[id][1]/MC_SIMS,hits[id][2]/MC_SIMS];
+  mcCache={key:key,targets:targets,p:out,n:MC_SIMS};
+  return mcCache;
+}
+/* Uses the simulation during a draft -- conditioning is automatic there, since
+   only undrafted players are in the pool. Falls back to the conditioned closed
+   form outside a draft, where there's no pick position to simulate from. */
 function pLasts(pid,pick){
   const now=pickNow();
   if(adpOf(pid)==null)return null;
   if(pick<=now)return 1;                    // he is on the board; that is certain
+  if(draftCfg.on){
+    const mc=mcRun(),t=mc.targets.indexOf(pick);
+    if(t>=0&&mc.p[pid])return mc.p[pid][t];
+  }
   const raw=pLastsRaw(pid,pick),base=pLastsRaw(pid,now);
   if(base<=1e-6)return 0;                   // far past his ADP: the gaussian is spent
   return Math.max(0,Math.min(1,raw/base));
