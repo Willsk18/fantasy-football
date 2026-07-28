@@ -203,6 +203,44 @@ Schedules only need regenerating for a new season. Note that `shortName` uses `V
 `@`) for neutral-site games — a naive `@`-only parse silently drops those games, which is
 how a team ends up with 16 games instead of 17.
 
+### Draft mode
+
+`store.draft = {on, teams, slot, snake, offset}` — synced with the board, so settings and
+pick position follow you between devices mid-draft.
+
+**The pick counter is derived, not entered:** `pickNow() = drafted.size + 1 + offset`. The
+crossed-off set is the single source of truth, which means the whole feature is only
+correct if *every* pick gets marked, not just yours. `offset` exists so you can correct
+drift without fake-drafting players to catch up.
+
+`myPicks()` builds your turns from slot and league size; even rounds reverse when `snake`.
+Verified against slots 1, 3 and 12 in a 12-team league (1/24/25/48, 3/22/27/46, 12/13/36/37).
+
+#### The WAIT band is capped for a reason
+
+`availability()` compares a player's ADP to your next pick, with one full round either side
+as the coin-flip band — ADP is an average, and a tighter band would present guesswork as
+precision. The band scales with league size.
+
+The upper cap matters: without it, everyone more than three rounds out is labelled WAIT,
+which was **169 of 222 cards** in testing. Green wallpaper carries no information. Past
+three rounds the player isn't a live decision, so he gets no badge and the labelled set
+stays around 40 — the players you're actually choosing between. `gone` is never capped:
+an available player whose ADP is well past is a faller, and that's the most interesting
+signal on the board.
+
+#### Phones can't use the card's Draft button
+
+The `max-width:480px` rule hides `.draftbtn` entirely, so before draft mode there was no
+way to cross a player off on a phone — the device you draft from. The player modal carries
+a full-width cross-off button (`data-draftp`) that works at any size. If you touch the card
+layout, don't make that modal button the casualty.
+
+`setDrafted()` is the single entry point for both controls: it updates the set, saves,
+patches that one card in place, and repaints the bar and badges. Toggling deliberately
+avoids a full `renderList()` — badges update in place via `repaintAvail()` so a fast draft
+doesn't rebuild 222 cards per pick.
+
 ### Why the SQL looks the way it does
 
 The publishable key is committed deliberately; static hosting has nowhere to hide a

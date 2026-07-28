@@ -149,6 +149,27 @@
   .tiles .tdelta{font-size:12px;font-weight:800;border-radius:4px;padding:1px 4px;margin-left:2px;vertical-align:2px;color:var(--ink-faint)}
   .tiles .tdelta.up{color:#0F141C;background:var(--rb)}
   .tiles .tdelta.down{color:#0F141C;background:var(--qb)}
+  .dbar{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:9px 12px;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.04em}
+  .dbar:hover{border-color:#3a4756}
+  .dbar .dnow{color:var(--ink-dim);white-space:nowrap}
+  .dbar .dyou{flex:1;min-width:0;color:var(--chalk);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dbar .dgear{color:var(--ink-faint);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+  .dbar.clock{border-color:var(--rb);background:#16281f}
+  .dbar.clock .dyou{color:var(--rb);text-transform:uppercase;letter-spacing:.1em}
+  .avail{display:none;font-size:9.5px;font-weight:800;letter-spacing:.07em;border-radius:4px;padding:1px 4px;margin-left:3px;vertical-align:1px}
+  #list.draftmode .avail{display:inline-block}
+  #list.draftmode .vchip{display:none}
+  .avail.wait{color:#0F141C;background:var(--rb)}
+  .avail.risky{color:#0F141C;background:var(--qb)}
+  .avail.gone{color:var(--ink-faint);background:#2b3542}
+  .snote .avail{display:inline-block}
+  .drow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line)}
+  .drow label{font-size:13px;color:var(--ink-dim);font-weight:600}
+  .drow select,.drow input[type=number]{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:inherit;font-size:14px;padding:7px 9px;min-width:84px;text-align:center;outline:none}
+  .drow select:focus,.drow input:focus{border-color:#48586a}
+  .drow input[type=checkbox]{width:18px;height:18px;accent-color:var(--rb);cursor:pointer}
+  .dact{padding:14px 18px 0}
+  .dact .reset{width:100%;padding:11px}
   .prompt{background:var(--panel-2);border:1px solid #3a4756;border-radius:10px;padding:14px 14px 12px;margin-bottom:16px}
   .prompt .pq{font-size:14.5px;font-weight:800;color:var(--chalk);margin-bottom:5px}
   .prompt .snote{margin:0 0 12px;font-size:12.5px}
@@ -191,6 +212,7 @@
       <span class="scount" id="scount"></span>
       <select id="team" class="teamsel" title="Filter by team"><option value="">All teams</option></select>
     </div>
+    <div class="dbar" id="dbar" hidden></div>
   </div>
 </header>
 
@@ -203,6 +225,7 @@
       <span class="lg"><span class="dot" style="background:var(--te)"></span>TE</span>
     </div>
     <div class="baracts">
+      <button class="reset" id="draftbtnmode" title="Draft mode">Draft mode</button>
       <button class="reset" id="adpbtn" title="Average draft position">ADP</button>
       <button class="reset" id="syncbtn" title="Use this board on another device">Sync</button>
       <button class="reset" id="reset">Reset this board</button>
@@ -527,15 +550,21 @@ async function storeSet(k,v){
   if(HAS_WS){try{return await window.storage.set(k,v);}catch(e){}}
   try{localStorage.setItem(k,v);}catch(e){}
 }
+/* Declared up here, above load() and adopt(), because both read it -- the rest
+   of the draft code lives further down. Same reason as the ADP accessors. */
+const DRAFT_DEF={on:false,teams:12,slot:1,snake:true,offset:0};
+let draftCfg=Object.assign({},DRAFT_DEF);
+
 async function load(){
   try{const r=await storeGet(KEY);if(r&&r.value)store=JSON.parse(r.value);}catch(e){}
   store.master=reconcileMaster(store.master);
   drafted=new Set(store.drafted||[]);
   tiers=(store.tiers&&!Array.isArray(store.tiers))?store.tiers:{};
+  draftCfg=Object.assign({},DRAFT_DEF,store.draft||{});
 }
 let saveTimer=null;
 function save(){
-  store.drafted=[...drafted];store.tiers=tiers;store.updatedAt=Date.now();
+  store.drafted=[...drafted];store.tiers=tiers;store.draft=draftCfg;store.updatedAt=Date.now();
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{storeSet(KEY,JSON.stringify(store));},120);
   pushRemote();
@@ -578,6 +607,7 @@ function adopt(remote){
   store.master=reconcileMaster(store.master);
   drafted=new Set(store.drafted||[]);
   tiers=(store.tiers&&!Array.isArray(store.tiers))?store.tiers:{};
+  draftCfg=Object.assign({},DRAFT_DEF,store.draft||{});
 }
 // Last write wins, compared on the updatedAt stamped into the blob by save().
 async function pullRemote(){
@@ -603,7 +633,7 @@ function pushRemote(){
     catch(e){setSyncState("error");}
   },600);
 }
-function renderAll(){renderTabs();renderList();applyFilter();}
+function renderAll(){renderTabs();renderList();applyFilter();paintDraftBar();}
 function paintSyncBtn(){
   const b=document.getElementById("syncbtn");if(!b)return;
   const on=syncReady()&&!!getCode();
@@ -674,12 +704,73 @@ async function refreshAdp(){
 function todayISO(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function prettyDate(iso){const b=String(iso).split("-");return b.length===3?MON[+b[1]-1]+" "+(+b[2])+", "+b[0]:iso;}
 
+/* ---------- Draft mode ---------------------------------------------
+   The pick counter is derived from how many players are crossed off, so
+   the board stays the single source of truth -- but that only holds if
+   every pick gets marked, not just yours. offset absorbs the drift when
+   you fall behind, without having to fake-draft players to catch up. */
+function myPicks(){
+  const n=draftCfg.teams,s=Math.min(Math.max(draftCfg.slot,1),n),out=[];
+  const rounds=Math.max(1,Math.ceil(PLAYERS.length/n));
+  for(let r=1;r<=rounds;r++)out.push((r-1)*n+((draftCfg.snake&&r%2===0)?(n-s+1):s));
+  return out;
+}
+function pickNow(){return Math.max(1,drafted.size+1+(draftCfg.offset||0));}
+function nextMyPick(){const p=pickNow();return myPicks().find(x=>x>=p)||null;}
+function roundOf(p){return Math.ceil(p/draftCfg.teams);}
+/* ADP is an average, not a promise -- real picks scatter around it. One full
+   round either side of your next pick is the honest coin-flip band; anything
+   tighter would dress up guesswork as certainty. */
+function availability(pid){
+  if(!draftCfg.on||drafted.has(pid))return null;
+  const a=adpOf(pid),np=nextMyPick();
+  if(a==null||!np)return null;
+  const gap=a-np,band=draftCfg.teams;
+  if(gap<=-band)return "gone";
+  if(gap<band)return "risky";
+  /* Everyone more than three rounds past your pick trivially lasts. Labelling
+     them WAIT painted 169 of 222 cards green -- wallpaper, not signal. */
+  return gap<=band*3?"wait":null;
+}
+const AVAIL_LBL={wait:"WAIT",risky:"RISKY",gone:"GONE"};
+function repaintAvail(){
+  listEl.classList.toggle("draftmode",!!draftCfg.on);
+  const cards=listEl.querySelectorAll(".card");
+  for(let i=0;i<cards.length;i++){
+    const el=cards[i].querySelector(".avail");if(!el)continue;
+    const v=availability(cards[i].dataset.id);
+    el.className="avail"+(v?" "+v:"");
+    el.textContent=v?AVAIL_LBL[v]:"";
+  }
+}
+function paintDraftBar(){
+  const bar=document.getElementById("dbar");if(!bar)return;
+  if(!draftCfg.on){bar.hidden=true;bar.innerHTML="";return;}
+  bar.hidden=false;
+  const p=pickNow(),np=nextMyPick(),mine=(np===p);
+  bar.className="dbar"+(mine?" clock":"");
+  bar.innerHTML='<span class="dnow">Rd '+roundOf(p)+' &middot; Pick '+p+'</span>'
+    +(np?'<span class="dyou">'+(mine?"You’re on the clock":"You pick at "+np+" &middot; "+(np-p)+" away")+'</span>'
+        :'<span class="dyou">No picks left</span>')
+    +'<span class="dgear">Edit</span>';
+}
+function setDrafted(id,on){
+  if(on)drafted.add(id);else drafted.delete(id);
+  save();
+  const li=listEl.querySelector('.card[data-id="'+id+'"]');
+  if(li){
+    li.classList.toggle("drafted",on);
+    const b=li.querySelector(".draftbtn");if(b)b.textContent=on?"Undo":"Draft";
+  }
+  paintDraftBar();repaintAvail();
+}
+
 function cardHTML(id){
   const p=BY_ID[id];const isD=drafted.has(id);
   return '<li class="card'+(isD?" drafted":"")+'" data-id="'+id+'" style="--pc:'+POS_COLOR[p.pos]+'">'
     +'<span class="grip" title="Drag to reorder"><svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor"><circle cx="4" cy="4" r="1.6"/><circle cx="10" cy="4" r="1.6"/><circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="4" cy="16" r="1.6"/><circle cx="10" cy="16" r="1.6"/></svg></span>'
     +'<span class="rank"></span>'
-    +'<span class="meta"><div class="name">'+p.name+'</div><div class="team">'+(p.team||"FA")+adpBits(id)+' <span class="bye">· Bye '+p.bye+'</span></div></span>'
+    +'<span class="meta"><div class="name">'+p.name+'</div><div class="team">'+(p.team||"FA")+adpBits(id)+'<span class="avail"></span> <span class="bye">· Bye '+p.bye+'</span></div></span>'
     +'<span class="vorp"><span class="vval">'+fmtVorp(p.vorp)+'</span><span class="vlbl">VORP</span></span>'
     +'<span class="pos">'+p.pos+'</span>'
     +'<button class="draftbtn">'+(isD?"Undo":"Draft")+'</button></li>';
@@ -703,7 +794,7 @@ function renderList(){
   }else{
     listEl.innerHTML=ids.map(cardHTML).join("");
   }
-  renumber();applyFilter();
+  renumber();applyFilter();repaintAvail();
 }
 // Read player order + break slots back out of the DOM after any drag/edit.
 function syncFromDOM(){
@@ -743,10 +834,9 @@ listEl.addEventListener("click",e=>{
   if(tx){removeBreakEl(tx.closest(".tierbreak"));return;}
   const btn=e.target.closest(".draftbtn");
   if(btn){
-    const li=btn.closest(".card");const id=li.dataset.id;
-    if(drafted.has(id)){drafted.delete(id);li.classList.remove("drafted");btn.textContent="Draft";}
-    else{drafted.add(id);li.classList.add("drafted");btn.textContent="Undo";}
-    save();return;
+    const id=btn.closest(".card").dataset.id;
+    setDrafted(id,!drafted.has(id));
+    return;
   }
   if(e.target.closest(".grip"))return;
   const li=e.target.closest(".card");
@@ -866,6 +956,8 @@ function paintPlayer(){
     +'<div class="mname">'+p.name+'</div>'
     +'<div class="msub">'+p.pos+p.posrk+' &middot; '+teamBit+' &middot; Overall '+p.ovr+'</div>'
     +'<div class="ptabs">'+PTABS.map(t=>'<button class="ptab'+(t[0]===curPT?" on":"")+'" data-pt="'+t[0]+'">'+t[1]+'</button>').join("")+'</div></div>'
+    +'<div class="dact"><button class="reset'+(drafted.has(p.id)?" danger":"")+'" data-draftp="1">'
+      +(drafted.has(p.id)?"Un-draft — put him back on the board":"Cross off — mark as drafted")+'</button></div>'
     +'<div id="pbody">'+(curPT==="overview"?overviewBody(p):curPT==="sched"?schedTable(p):'<div class="note">Loading 2025 game log\u2026</div>')+'</div>';
   if(curPT==="log"){
     const want=p.id;
@@ -917,6 +1009,61 @@ function openSync(){
   modalEl.innerHTML=h+'<p class="smsg" id="smsg"></p></div>';
   ovl.classList.add("show");
 }
+function openDraft(){
+  modalEl.style.removeProperty("--pc");
+  const n=draftCfg.teams;
+  let teams="",slots="";
+  for(let i=6;i<=16;i++)teams+='<option value="'+i+'"'+(i===n?" selected":"")+'>'+i+'</option>';
+  for(let i=1;i<=n;i++)slots+='<option value="'+i+'"'+(i===draftCfg.slot?" selected":"")+'>'+i+'</option>';
+  modalEl.innerHTML='<div class="mhead"><button class="mclose" aria-label="Close">×</button>'
+   +'<div class="mname">Draft mode</div>'
+   +'<div class="msub">'+(draftCfg.on?"On &middot; pick "+pickNow():"Off")+'</div></div>'
+   +'<div class="sync">'
+   +'<p class="snote">Crossing a player off advances the pick counter, so mark <b>every</b> pick — not just yours. Each remaining player then gets labelled by whether he should survive to your next turn: '
+   +'<span class="avail wait">WAIT</span> he should last, <span class="avail risky">RISKY</span> a coin flip, <span class="avail gone">GONE</span> he won’t.</p>'
+   +'<div class="drow"><label for="dteams">Teams</label><select id="dteams">'+teams+'</select></div>'
+   +'<div class="drow"><label for="dslot">Your slot</label><select id="dslot">'+slots+'</select></div>'
+   +'<div class="drow"><label for="dsnake">Snake order</label><input type="checkbox" id="dsnake"'+(draftCfg.snake?" checked":"")+'></div>'
+   +'<div class="drow"><label for="dpick">Current pick</label><input type="number" id="dpick" min="1" value="'+pickNow()+'"></div>'
+   +'<p class="snote">Correct <b>current pick</b> if you fall behind — it nudges the counter without you having to fake-draft anyone. Your turns: <b>'+myPicks().slice(0,6).join(", ")+'</b>…</p>'
+   +'<div class="syncbtns"><button class="reset" data-d="save">'+(draftCfg.on?"Update":"Start draft")+'</button>'
+   +(draftCfg.on?'<button class="reset danger" data-d="stop">End draft</button>':'')+'</div>'
+   +'<p class="snote">ADP comes from ESPN’s average league, so if yours reaches or waits differently, treat the labels as a lean rather than a verdict.</p>'
+   +'<p class="smsg" id="smsg"></p></div>';
+  const dt=document.getElementById("dteams"),ds=document.getElementById("dslot");
+  if(dt&&ds)dt.addEventListener("change",()=>{
+    const k=+dt.value,cur=Math.min(+ds.value,k);let h="";
+    for(let i=1;i<=k;i++)h+='<option value="'+i+'"'+(i===cur?" selected":"")+'>'+i+'</option>';
+    ds.innerHTML=h;
+  });
+  ovl.classList.add("show");
+}
+document.getElementById("draftbtnmode").addEventListener("click",()=>openDraft());
+document.getElementById("dbar").addEventListener("click",()=>openDraft());
+modalEl.addEventListener("click",e=>{
+  const b=e.target.closest("[data-d]");if(!b)return;
+  if(b.dataset.d==="stop"){
+    draftCfg.on=false;save();paintDraftBar();repaintAvail();openDraft();
+    msg("Draft mode off. Your crossed-off players are untouched.","");
+    return;
+  }
+  const t=+document.getElementById("dteams").value||12;
+  draftCfg.teams=t;
+  draftCfg.slot=Math.min(+document.getElementById("dslot").value||1,t);
+  draftCfg.snake=document.getElementById("dsnake").checked;
+  draftCfg.offset=Math.max(1,+document.getElementById("dpick").value||1)-(drafted.size+1);
+  draftCfg.on=true;
+  save();paintDraftBar();repaintAvail();openDraft();
+  msg("Draft mode on — you’re up at pick "+nextMyPick()+".","good");
+});
+// Phones hide the card's Draft button, so the modal carries the only
+// cross-off control that works on the device you'll actually draft from.
+modalEl.addEventListener("click",e=>{
+  if(!e.target.closest("[data-draftp]")||!curP)return;
+  setDrafted(curP.id,!drafted.has(curP.id));
+  paintPlayer();
+});
+
 // How far the board has drifted from the ADP baseline -- shown before you decide
 // whether a refresh should reorder anything.
 function orderDrift(){
@@ -1116,7 +1263,7 @@ listEl.addEventListener("touchmove",()=>{lpMoved=true;clearTimeout(lpTimer);},{p
 listEl.addEventListener("touchend",()=>clearTimeout(lpTimer),{passive:true});
 
 (async function(){
-  await load();populateTeams();renderTabs();renderList();paintSyncBtn();
+  await load();populateTeams();renderTabs();renderList();paintSyncBtn();paintDraftBar();
   if(await pullRemote())renderAll();   // paint from local first, then correct from remote
 })();
 </script>
