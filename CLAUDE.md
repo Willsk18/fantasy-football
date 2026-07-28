@@ -239,12 +239,38 @@ Two things fell out of checking the real data, and both contradict the obvious g
 the FFC average can be calibrated. It's a visible dial rather than a buried constant
 precisely because it's the one genuinely unverifiable part of the model.
 
-**Why not Monte Carlo.** For "does he last to pick P" a simulation samples the same normal
-and answers the same question with added noise — and since the board recomputes on every
-pick, the numbers would visibly wobble between repaints. The CDF is exact and stable.
-Simulation would earn its keep on *joint* questions ("will at least one of these three
-last"), which needs sampling because the outcomes are correlated through a shared draft
-order. That's a real feature, just a different one.
+#### Monte Carlo (used whenever draft mode is on)
+
+The closed form treats players independently and so never enforces one player leaving the
+board per pick. Measured, that drifts hard: the marginals implied **185 players gone by
+pick 180** when only 179 picks exist.
+
+`mcRun()` samples `adp + σ·Z` for every undrafted player, sorts, and treats the ordering
+as a draft — rank *r* goes at pick `now + r`. Coherence is then automatic (verified: 17.7
+players + 0.3 phantoms = exactly the 18 picks between 28 and 46), and so is conditioning,
+since only undrafted players enter the pool. **Picks are assigned by rank, not by ADP
+magnitude**, so the ADP scale-calibration error that the closed form suffers from stops
+mattering entirely — this is the main reason simulation wins here.
+
+It is materially more pessimistic than the closed form, and correctly so: at pick 28 there
+are 14 players with ADP between 28 and 46 competing for 18 slots, so a man at ADP 40 rarely
+survives. Closed form said 26%, MC says 4%.
+
+`MC_PHANTOM` (3) covers picks going to nobody on this board. It's small because adding
+K/DST made the pool near-complete at 280 players for a ~180-pick draft. Raise it only if
+you find real evidence of picks landing outside the pool.
+
+**The jitter objection is handled by seeding**, not by avoiding simulation. `mcKey()` keys
+the cache on the board state and `mulberry32` is seeded from it, so a given position always
+produces identical numbers — no wobble between repaints. One run scores every player at
+once, so cost is per pick (~1500 sims over ~280 players), not per card.
+
+The closed form is still the fallback outside draft mode, where there's no pick position
+to simulate from.
+
+Still not done, and the genuine remaining use for sampling: **joint** questions ("will at
+least one of these three last to pick 46"). The machinery is now in place — it needs the
+per-sim survivor sets retained rather than collapsed into per-player counts.
 
 **Conditioning is not optional.** `pLasts` divides by `pLastsRaw(pid, pickNow())`. Every
 player on screen is provably undrafted *right now*, and the odds have to reflect that:

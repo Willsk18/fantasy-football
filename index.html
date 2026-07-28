@@ -842,17 +842,87 @@ function pLastsRaw(pid,pick){
   if(a==null)return null;
   return 1-normCdf((pick-a)/adpSigma(pid,a));   // P(his slot falls past this pick)
 }
+
+/* ---------- Monte Carlo draft --------------------------------------------
+   The closed form treats every player independently, so it never enforces
+   that exactly one player leaves the board per pick. Measured, that drifts
+   badly: the marginals implied 185 players gone by pick 180, when only 179
+   picks exist.
+
+   Simulating fixes it by construction. Give each remaining player a noisy
+   score (adp + sigma*Z), sort, and that ordering IS a draft -- the k-th man
+   goes at pick now+k-1. Because picks are assigned by RANK rather than by
+   ADP magnitude, the whole scale-calibration problem stops mattering; only
+   relative order and spread do.
+
+   PHANTOM covers picks that go to nobody on this board. With K/DST added the
+   pool is nearly complete, so it's small, but the early rounds still run ~3
+   short of ESPN's own ADP scale.
+
+   Seeded on the board state, so a given position always yields the same
+   numbers -- no wobble between repaints, which was the original objection
+   to simulating at all. One run scores every player at once, so the cost is
+   per pick, not per card.                                                  */
+const MC_SIMS=1500, MC_PHANTOM=3;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+let mcCache=null;
+function mcKey(){return draftCfg.on?(pickNow()+"|"+drafted.size+"|"+draftCfg.teams+"|"+draftCfg.slot+"|"+draftCfg.snake+"|"+draftCfg.vol+"|"+(adpLive?adpLive.asof:"base")):"off";}
+function mcRun(){
+  const key=mcKey();
+  if(mcCache&&mcCache.key===key)return mcCache;
+  const now=pickNow(),targets=oddsPicks(3);
+  const pool=[];
+  store.master.forEach(id=>{
+    if(drafted.has(id))return;
+    const a=adpOf(id);
+    if(a!=null)pool.push({id:id,a:a,s:adpSigma(id,a)});
+  });
+  const hits={};pool.forEach(p=>{hits[p.id]=[0,0,0];});
+  if(!targets.length||!pool.length){mcCache={key:key,targets:targets,p:{},n:0};return mcCache;}
+  const rnd=mulberry32(1013904223^(now*2654435761));
+  const np=pool.length,nAll=np+MC_PHANTOM;
+  const score=new Float64Array(nAll),order=new Array(nAll);
+  const cmp=(x,y)=>score[x]-score[y];
+  const nt=targets.length;
+  for(let s=0;s<MC_SIMS;s++){
+    for(let i=0;i<np;i++){
+      let u=rnd();if(u<1e-12)u=1e-12;
+      score[i]=pool[i].a+pool[i].s*Math.sqrt(-2*Math.log(u))*Math.cos(6.283185307179586*rnd());
+    }
+    // phantoms consume picks without being anyone on this board
+    for(let j=0;j<MC_PHANTOM;j++)score[np+j]=now+rnd()*220;
+    for(let i=0;i<nAll;i++)order[i]=i;
+    order.sort(cmp);
+    for(let r=0;r<nAll;r++){
+      const pi=order[r];
+      if(pi>=np)continue;                   // phantom: burns the slot, scores nothing
+      const at=now+r,h=hits[pool[pi].id];    // rank r means he goes at pick now+r
+      for(let t=0;t<nt;t++) if(at>=targets[t])h[t]++;
+    }
+  }
+  const out={};
+  for(const id in hits)out[id]=hits[id].map(c=>c/MC_SIMS);
+  mcCache={key:key,targets:targets,p:out,n:MC_SIMS};
+  return mcCache;
+}
 /* Condition on what the board already proves: he is undrafted right now.
    Skipping this understated bubble players by 14-16 points, and produced an
    outright absurdity -- a player sitting on your screen at your own pick read
    4% when he is provably available. P(slot>K | slot>=now) = surv(K)/surv(now),
    which collapses to 1 at K=now, as it must. */
+/* Reads the simulation when draft mode is running -- conditioning on "he is
+   still here" is automatic there, since only undrafted players are simulated.
+   Falls back to the conditioned closed form outside a draft. */
 function pLasts(pid,pick){
   const now=pickNow();
   if(adpOf(pid)==null)return null;
   if(pick<=now)return 1;
+  if(draftCfg.on){
+    const mc=mcRun(),t=mc.targets.indexOf(pick);
+    if(t>=0&&mc.p[pid])return mc.p[pid][t];
+  }
   const raw=pLastsRaw(pid,pick),base=pLastsRaw(pid,now);
-  if(base<=1e-6)return 0;   // already far past his ADP: the gaussian is spent, treat as going next
+  if(base<=1e-6)return 0;
   return Math.max(0,Math.min(1,raw/base));
 }
 // On the clock, "lasts to your pick" is trivially yes -- the useful question
