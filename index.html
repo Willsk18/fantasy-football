@@ -155,6 +155,8 @@
   .drow select,.drow input[type=number]{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:inherit;font-size:14px;padding:7px 9px;min-width:84px;text-align:center;outline:none}
   .drow select:focus,.drow input:focus{border-color:#48586a}
   .drow input[type=checkbox]{width:18px;height:18px;accent-color:var(--rb);cursor:pointer}
+  .dact{padding:14px 18px 0}
+  .dact .reset{width:100%;padding:11px}
   .vchip{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.02em;border-radius:4px;padding:1px 4px;margin-left:2px;vertical-align:1px;color:var(--ink-faint)}
   .vchip.up{color:#0F141C;background:var(--rb)}
   .vchip.down{color:#0F141C;background:var(--qb)}
@@ -764,10 +766,9 @@ listEl.addEventListener("click",e=>{
   if(tx){removeBreakEl(tx.closest(".tierbreak"));return;}
   const btn=e.target.closest(".draftbtn");
   if(btn){
-    const li=btn.closest(".card");const id=li.dataset.id;
-    if(drafted.has(id)){drafted.delete(id);li.classList.remove("drafted");btn.textContent="Draft";}
-    else{drafted.add(id);li.classList.add("drafted");btn.textContent="Undo";}
-    save();paintDraftBar();return;
+    const id=btn.closest(".card").dataset.id;
+    setDrafted(id,!drafted.has(id));
+    return;
   }
   if(e.target.closest(".grip"))return;
   const li=e.target.closest(".card");
@@ -901,6 +902,10 @@ function paintPlayer(){
     +'<div class="mname">'+p.name+'</div>'
     +'<div class="msub">'+p.pos+p.posrk+' &middot; '+teamBit+' &middot; Overall '+p.ovr+'</div>'
     +'<div class="ptabs">'+PTABS.map(t=>'<button class="ptab'+(t[0]===curPT?" on":"")+'" data-pt="'+t[0]+'">'+t[1]+'</button>').join("")+'</div></div>'
+    // Phones hide the card's own Draft button entirely, so this is the only
+    // cross-off control that works on the device you draft from.
+    +'<div class="dact"><button class="reset'+(drafted.has(p.id)?" danger":"")+'" data-draftp="1">'
+      +(drafted.has(p.id)?"Put him back on the board":"Cross off — mark as drafted")+'</button></div>'
     +'<div id="pbody">'+(curPT==="overview"?overviewBody(p):curPT==="sched"?schedTable(p):'<div class="note">Loading 2025 game log\u2026</div>')+'</div>';
   if(curPT==="log"){
     const want=p.id;
@@ -927,6 +932,11 @@ modalEl.addEventListener("click",e=>{
   const t=e.target.closest("[data-pt]");
   if(!t||!curP)return;
   curPT=t.dataset.pt;paintPlayer();
+});
+modalEl.addEventListener("click",e=>{
+  if(!e.target.closest("[data-draftp]")||!curP)return;
+  setDrafted(curP.id,!drafted.has(curP.id));
+  paintPlayer();          // reflect the new state in the button label
 });
 
 function msg(t,cls){const m=document.getElementById("smsg");if(m){m.textContent=t;m.className="smsg"+(cls?" "+cls:"");}}
@@ -1176,6 +1186,20 @@ function myPicks(){
 }
 function pickNow(){return Math.max(1,drafted.size+1+(+draftCfg.offset||0));}
 function nextMyPick(){const p=pickNow();return myPicks().find(x=>x>=p)||null;}
+/* Single entry point for crossing a player off, shared by the card button and
+   the modal button, so the two can't drift apart. Patches the one card in place
+   rather than re-rendering the list -- a fast draft shouldn't rebuild 222 rows
+   per pick. */
+function setDrafted(id,on){
+  if(on)drafted.add(id);else drafted.delete(id);
+  save();
+  const li=listEl.querySelector('.card[data-id="'+id+'"]');
+  if(li){
+    li.classList.toggle("drafted",on);
+    const b=li.querySelector(".draftbtn");if(b)b.textContent=on?"Undo":"Draft";
+  }
+  paintDraftBar();
+}
 function paintDraftBar(){
   const bar=document.getElementById("dbar");if(!bar)return;
   if(!draftCfg.on){bar.hidden=true;bar.innerHTML="";return;}
