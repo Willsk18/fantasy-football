@@ -1180,6 +1180,7 @@ function openDraft(){
    +'<p class="snote">Correct <b>current pick</b> if you fall behind — it nudges the counter without fake-drafting anyone. Your turns: <b>'+myPicks().slice(0,6).join(", ")+'</b>…</p>'
    +'<div class="syncbtns"><button class="reset" data-d="save">'+(draftCfg.on?"Update":"Start draft")+'</button>'
    +(draftCfg.on?'<button class="reset danger" data-d="stop">End draft</button>':'')+'</div>'
+   +(draftCfg.on&&drafted.size?'<p class="snote">Ending the draft puts all <b>'+drafted.size+'</b> crossed-off players back on the board.</p>':'')
    +'<p class="smsg" id="smsg"></p></div>';
   const dt=document.getElementById("dteams"),ds=document.getElementById("dslot");
   if(dt&&ds)dt.addEventListener("change",()=>{
@@ -1193,8 +1194,15 @@ function val(id,d){const el=document.getElementById(id);return el?el.value:d;}
 modalEl.addEventListener("click",e=>{
   const b=e.target.closest("[data-d]");if(!b)return;
   if(b.dataset.d==="stop"){
-    draftCfg.on=false;save();paintDraftBar();openDraft();
-    msg("Draft mode off. Your crossed-off players are untouched.","");
+    // Ending a draft clears the board for the next one. Destructive and it
+    // syncs, so confirm whenever there's actually something to lose.
+    const n=drafted.size;
+    if(n&&!confirm("End the draft and put all "+n+" crossed-off players back on the board?"))return;
+    drafted.clear();
+    draftCfg.on=false;
+    draftCfg.offset=0;        // calibrated to the draft just ended; stale for the next one
+    save();renderList();paintDraftBar();openDraft();
+    msg(n?"Draft over — "+n+" players back on the board.":"Draft mode off.","good");
     return;
   }
   const t=+val("dteams",12)||12;
