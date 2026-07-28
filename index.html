@@ -1248,21 +1248,32 @@ function oddsPicks(k){const p=pickNow();return myPicks().filter(x=>x>p).slice(0,
 function badgePick(){return oddsPicks(1)[0]||null;}
 /* Above 95% he isn't a decision. Long shots are never hidden -- an available
    player already past his ADP is a faller, the best read on the board. */
-function availability(pid){
+function availability(pid,force){
   if(!draftCfg.on||drafted.has(pid))return null;
   const np=badgePick();if(!np)return null;
   const p=pLasts(pid,np);
-  if(p==null||p>=0.95)return null;
+  if(p==null)return null;
+  if(p>=0.95&&!force)return null;
   return {p:p,cls:p>=0.7?"wait":(p>=0.35?"risky":"gone")};
 }
 function pct(p){return p>=0.995?"99%":(p<0.005?"<1%":Math.round(p*100)+"%");}
+const AVAIL_ALWAYS=24;
 function repaintAvail(){
   if(!listEl)return;
   listEl.classList.toggle("draftmode",!!draftCfg.on);
+  /* Always badge the top of the remaining board, however safe the odds. The
+     95% cut alone leaves 4 badges out of 220 at pick 1, which reads as the
+     feature being broken rather than as "everyone lasts". */
+  let top=null;
+  if(draftCfg.on){
+    top=new Set(store.master.filter(id=>!drafted.has(id)&&adpOf(id)!=null)
+      .sort((x,y)=>adpOf(x)-adpOf(y)).slice(0,AVAIL_ALWAYS));
+  }
   const cards=listEl.querySelectorAll(".card");
   for(let i=0;i<cards.length;i++){
     const el=cards[i].querySelector(".avail");if(!el)continue;
-    const v=availability(cards[i].dataset.id);
+    const id=cards[i].dataset.id;
+    const v=availability(id,!!(top&&top.has(id)));
     el.className="avail"+(v?" "+v.cls:"");
     el.textContent=v?pct(v.p):"";
   }
