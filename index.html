@@ -1194,9 +1194,8 @@ function val(id,d){const el=document.getElementById(id);return el?el.value:d;}
 modalEl.addEventListener("click",e=>{
   const b=e.target.closest("[data-d]");if(!b)return;
   if(b.dataset.d==="stop"){
-    // Ending a draft clears the board for the next one. Destructive and it
-    // syncs, so confirm whenever there's actually something to lose.
-    /* No confirm() here on purpose. Dialogs are suppressed in at least one
+    /* Ending a draft clears the board for the next one, and it syncs.
+       No confirm() here on purpose: dialogs are suppressed in at least one
        browser this board is used in -- confirm() returns false without ever
        showing, so the guard silently ate the whole action. The panel states
        the consequence before you click, which is the warning that actually
