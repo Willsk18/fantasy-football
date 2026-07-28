@@ -762,11 +762,28 @@ function adpSigma(pid,a){
   const m=ADP_SD[pid];
   return Math.max(0.6,(m!=null?m:1.411+0.0973*a)*(draftCfg.vol||1));
 }
-function pLasts(pid,pick){
+function pLastsRaw(pid,pick){
   const a=adpOf(pid);
   if(a==null)return null;
   return 1-normCdf((pick-a)/adpSigma(pid,a));   // P(his slot falls past this pick)
 }
+/* Condition on what the board already proves: he is undrafted right now.
+   Skipping this understated bubble players by 14-16 points, and produced an
+   outright absurdity -- a player sitting on your screen at your own pick read
+   4% when he is provably available. P(slot>K | slot>=now) = surv(K)/surv(now),
+   which collapses to 1 at K=now, as it must. */
+function pLasts(pid,pick){
+  const now=pickNow();
+  if(adpOf(pid)==null)return null;
+  if(pick<=now)return 1;
+  const raw=pLastsRaw(pid,pick),base=pLastsRaw(pid,now);
+  if(base<=1e-6)return 0;   // already far past his ADP: the gaussian is spent, treat as going next
+  return Math.max(0,Math.min(1,raw/base));
+}
+// On the clock, "lasts to your pick" is trivially yes -- the useful question
+// becomes the pick after that.
+function oddsPicks(k){const p=pickNow();return myPicks().filter(x=>x>p).slice(0,k);}
+function badgePick(){return oddsPicks(1)[0]||null;}
 function roundOf(p){return Math.ceil(p/draftCfg.teams);}
 /* ADP is an average, not a promise -- real picks scatter around it. One full
    round either side of your next pick is the honest coin-flip band; anything
@@ -776,7 +793,7 @@ function roundOf(p){return Math.ceil(p/draftCfg.teams);}
    player already past his ADP is a faller, the best read on the board. */
 function availability(pid){
   if(!draftCfg.on||drafted.has(pid))return null;
-  const np=nextMyPick();if(!np)return null;
+  const np=badgePick();if(!np)return null;
   const p=pLasts(pid,np);
   if(p==null||p>=0.95)return null;
   return {p:p,cls:p>=0.7?"wait":(p>=0.35?"risky":"gone")};
@@ -981,19 +998,21 @@ function schedTable(p){
 }
 function oddsBlock(p){
   if(!draftCfg.on)return "";
-  const picks=nextMyPicks(3);
+  const picks=oddsPicks(3);
   if(!picks.length)return "";
   const a=adpOf(p.id);
   if(a==null)return '<div class="odds"><h4>Will he last?</h4><div class="note">No ADP for this player, so there’s nothing to project.</div></div>';
-  const sd=ADP_SD[p.id];
+  const sd=ADP_SD[p.id],onClock=(nextMyPick()===pickNow());
   let rows="";
   picks.forEach(k=>{
     const pr=pLasts(p.id,k),cls=pr>=0.7?"wait":(pr>=0.35?"risky":"gone");
-    rows+='<div class="orow"><span class="ok">Pick '+k+(k===pickNow()?" (now)":"")+'</span>'
+    rows+='<div class="orow"><span class="ok">Pick '+k+'</span>'
       +'<span class="obar"><i style="width:'+Math.round(pr*100)+'%"></i></span>'
       +'<span class="avail '+cls+'">'+pct(pr)+'</span></div>';
   });
-  return '<div class="odds"><h4>Chance he lasts to your pick</h4>'+rows
+  return '<div class="odds"><h4>Chance he lasts to your pick</h4>'
+    +(onClock?'<div class="note" style="margin:0 0 8px">You’re on the clock — he’s available right now. These are your later turns.</div>':'')
+    +rows
     +'<div class="note">ADP '+a.toFixed(1)+' &middot; spread &plusmn;'
     +(sd!=null?sd.toFixed(1)+' from 3,526 real drafts':(1.411+0.0973*a).toFixed(1)+' estimated — he’s outside the sampled pool')
     +'.</div></div>';

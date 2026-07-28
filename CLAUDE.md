@@ -246,6 +246,32 @@ Simulation would earn its keep on *joint* questions ("will at least one of these
 last"), which needs sampling because the outcomes are correlated through a shared draft
 order. That's a real feature, just a different one.
 
+**Conditioning is not optional.** `pLasts` divides by `pLastsRaw(pid, pickNow())`. Every
+player on screen is provably undrafted *right now*, and the odds have to reflect that:
+`P(slot > K | slot >= now)`. Without it, bubble players read **14–16 points too low**, and
+a player sitting on your screen at your own pick showed **4%** instead of 100%. If you ever
+refactor this, the one-line regression test is that `pick == pickNow` must return exactly 1.
+
+Extreme fallers exhaust the model: once someone is many σ past his ADP the Gaussian says
+his presence was impossible, and the conditional ratio becomes 0/0. Guarded by returning 0
+below a `1e-6` base, i.e. "he goes next" — defensible, since fallers get scooped once
+they're visibly value, but it is a guard, not a result.
+
+`badgePick()` skips your current pick when you're on the clock. "Will he last until now"
+is trivially yes, so the card badge advances to your following turn instead.
+
+**Known, unfixed — scoring format.** The board is half-PPR; both ADP sources are PPR. FFC
+publishes a `half-ppr` set that differs by a mean of 4.6 picks, with 25 players off by 10+
+(worst: 20). That's roughly one σ of systematic error for mid-round players. It's left as
+PPR because switching means giving up ESPN's live refresh and 222-player coverage for
+FFC's 201 and a smaller 1,110-draft sample — a real trade, not an obvious win.
+
+**Not an issue, though it looks like one:** FFC ignores its own `teams` parameter (10, 12
+and 14 return identical payloads). This doesn't matter, because ADP counts *players taken
+before him*, which is exactly what `pickNow()` counts. The two are directly comparable at
+any league size; league size only moves where your own picks fall, which `myPicks()`
+already handles.
+
 **Caveat worth knowing:** ADP comes from ESPN, σ from FFC, and the two disagree by a mean
 of 15.4 picks on the players they share. σ describes spread rather than location so it
 transfers reasonably, but this is a seam. If ADP and σ ever need to agree exactly, switch
