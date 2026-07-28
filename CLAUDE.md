@@ -22,7 +22,28 @@ the entire application.
 
 **No JS runtime is installed on this machine** — no `node`, no `python`. You cannot
 syntax-check or unit-test changes locally. Verify in a browser, and check the console.
-A crude delimiter-balance check over the script block catches gross syntax errors:
+
+### Appending to the PLAYERS array — read this first
+
+The last element of the array literal has **no trailing comma**. Splicing new entries after
+it produces two adjacent object literals with nothing between them, which is a SyntaxError:
+the whole script fails to parse and the board renders *nothing*. This bit twice, and it
+survived every structural check because **brace, paren and bracket counts all stay balanced**
+— a missing comma is invisible to them.
+
+Always run this after touching PLAYERS:
+
+```bash
+grep -n '^{name:"' index.html | grep -v '},$'      # every entry must end with },
+```
+
+The general form, for any array of literals:
+
+```bash
+awk 'prev ~ /}$/ && /^[[:space:]]*{/ {print "MISSING COMMA line "NR} {prev=$0}' index.html
+```
+
+A crude delimiter-balance check over the script block catches grosser syntax errors:
 
 ```bash
 awk '/^<script>$/{f=1;next} /^<\/script>$/{f=0} f' index.html > /tmp/board.js
